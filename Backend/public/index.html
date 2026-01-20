@@ -1,1 +1,41 @@
 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zenith Elite | Login</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body data-theme="dark">
+
+    <div id="auth-page" class="auth-container">
+        <div class="auth-card">
+            <h2 id="auth-title">Welcome Back</h2>
+            <p id="auth-subtitle">Please enter your details</p>
+            
+            <div id="register-fields" style="display: none;">
+                <input type="text" id="reg-name" placeholder="Full Name">
+            </div>
+            <input type="email" id="auth-email" placeholder="Email Address">
+            <input type="password" id="auth-pass" placeholder="Password">
+            
+            <button id="auth-btn" onclick="handleAuth()">Sign In</button>
+            <p class="toggle-text" onclick="toggleAuth()">Don't have an account? <span>Sign Up</span></p>
+        </div>
+    </div>
+
+    <div id="main-app" style="display: none;">
+        <div class="app-shell">
+            <header class="view-header">
+                <h1>Hello, <span id="user-display-name">User</span></h1>
+                <button onclick="logout()" class="btn-danger" style="padding: 5px 15px;">Logout</button>
+            </header>
+            </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
