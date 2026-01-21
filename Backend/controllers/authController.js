@@ -24,11 +24,11 @@ exports.register = async (req, res) => {
       password
     });
 
-    // Generate token
+    // Generate token - ✅ Uses User.js method
     const token = user.generateAuthToken();
 
-    // Update last login
-    user.lastLogin = Date.now();
+    // Update last active
+    user.lastActive = Date.now();
     await user.save();
 
     res.status(201).json({
@@ -78,11 +78,11 @@ exports.login = async (req, res) => {
       });
     }
 
-    // Generate token
+    // Generate token - ✅ Uses User.js method
     const token = user.generateAuthToken();
 
-    // Update last login
-    user.lastLogin = Date.now();
+    // Update last active
+    user.lastActive = Date.now();
     await user.save();
 
     res.json({
@@ -112,6 +112,8 @@ exports.login = async (req, res) => {
 // @access  Private
 exports.getMe = async (req, res) => {
   try {
+    console.log('🔍 Fetching user with ID:', req.userId);
+    
     const user = await User.findById(req.userId).select('-password');
     
     if (!user) {
@@ -121,9 +123,18 @@ exports.getMe = async (req, res) => {
       });
     }
 
+    console.log('✅ User found:', user.email);
+    
     res.json({
       success: true,
-      user
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        avatar: user.avatar,
+        settings: user.settings,
+        lastActive: user.lastActive
+      }
     });
 
   } catch (error) {
@@ -140,7 +151,9 @@ exports.getMe = async (req, res) => {
 // @access  Private
 exports.updateSettings = async (req, res) => {
   try {
-    const { theme, soundEnabled, autosaveEnabled, remindersEnabled, notifications } = req.body;
+    const { theme, soundEnabled, autosaveEnabled, remindersEnabled } = req.body;
+    
+    console.log('⚙️ Updating settings for user:', req.userId);
     
     const user = await User.findById(req.userId);
     
@@ -156,12 +169,13 @@ exports.updateSettings = async (req, res) => {
       theme: theme || user.settings.theme,
       soundEnabled: soundEnabled !== undefined ? soundEnabled : user.settings.soundEnabled,
       autosaveEnabled: autosaveEnabled !== undefined ? autosaveEnabled : user.settings.autosaveEnabled,
-      remindersEnabled: remindersEnabled !== undefined ? remindersEnabled : user.settings.remindersEnabled,
-      notifications: notifications !== undefined ? notifications : user.settings.notifications
+      remindersEnabled: remindersEnabled !== undefined ? remindersEnabled : user.settings.remindersEnabled
     };
 
     await user.save();
 
+    console.log('✅ Settings updated for:', user.email);
+    
     res.json({
       success: true,
       message: 'Settings updated successfully',
