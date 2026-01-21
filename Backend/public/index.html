@@ -10,21 +10,7 @@
 </head>
 <body data-theme="dark">
 
-    <div id="auth-screen" class="auth-overlay">
-        <div class="auth-card">
-            <h2 id="auth-title">Welcome to Zenith X</h2>
-            <p id="auth-desc">Login to sync your tasks</p>
-            <div id="reg-extra" style="display: none;">
-                <input type="text" id="auth-name" placeholder="Full Name">
-            </div>
-            <input type="email" id="auth-email" placeholder="Email Address">
-            <input type="password" id="auth-pass" placeholder="Password">
-            <button id="auth-main-btn" onclick="handleAuth()">Login</button>
-            <p class="toggle-auth" onclick="toggleAuthMode()">Don't have an account? <span>Sign Up</span></p>
-        </div>
-    </div>
-
-    <div class="app-shell" id="app-content" style="display: none;">
+    <div class="app-shell">
         <aside class="sidebar">
             <div class="logo">
                 <div class="logo-box"><i class="fas fa-bolt"></i></div>
@@ -36,13 +22,12 @@
                 <div class="nav-btn" data-view="focus"><i class="fas fa-stopwatch"></i> Focus Mode</div>
                 <div class="nav-btn" data-view="settings"><i class="fas fa-sliders"></i> Settings</div>
             </nav>
-            <button class="logout-btn" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
         </aside>
 
         <main class="workspace">
             <section id="view-tasks" class="view active">
                 <header class="view-header">
-                    <h1>Hello, <span id="display-user">User</span></h1>
+                    <h1>My Tasks</h1>
                     <p id="live-clock"></p>
                 </header>
 
@@ -65,11 +50,60 @@
                         <input type="date" id="dateVal">
                     </div>
                 </div>
-
                 <div class="task-grid" id="taskGrid"></div>
             </section>
 
-            </main>
+            <section id="view-analytics" class="view">
+                <header class="view-header"><h1>Performance</h1></header>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h2 id="stat-total">0</h2>
+                        <p>Total Tasks</p>
+                    </div>
+                    <div class="stat-card">
+                        <h2 id="stat-efficiency" style="color: #6366f1;">0%</h2>
+                        <p>Efficiency</p>
+                    </div>
+                </div>
+                <div class="analytics-content">
+                    <div class="progress-ring-box">
+                        <svg width="150" height="150">
+                            <circle cx="75" cy="75" r="60" class="ring-bg"></circle>
+                            <circle cx="75" cy="75" r="60" class="ring-fill" id="ring"></circle>
+                        </svg>
+                        <div class="ring-text" id="ring-pct">0%</div>
+                    </div>
+                    <h3>Overall Completion</h3>
+                </div>
+            </section>
+
+            <section id="view-focus" class="view">
+                <header class="view-header"><h1>Focus Session</h1></header>
+                <div class="focus-box">
+                    <div class="timer-circle">
+                        <div class="timer-display" id="timer-display">25:00</div>
+                    </div>
+                    <div class="timer-controls">
+                        <button id="timer-start" class="btn-primary">Start Focus</button>
+                        <button id="timer-reset" class="btn-outline">Reset</button>
+                    </div>
+                </div>
+            </section>
+
+            <section id="view-settings" class="view">
+                <header class="view-header"><h1>Settings</h1></header>
+                <div class="settings-list">
+                    <div class="setting-item">
+                        <div class="s-info"><h4>Appearance</h4><p>Dark/Light mode</p></div>
+                        <button class="btn-outline" onclick="toggleTheme()">Switch Theme</button>
+                    </div>
+                    <div class="setting-item danger">
+                        <div class="s-info"><h4>Data</h4><p>Clear Database</p></div>
+                        <button class="btn-danger" onclick="localStorage.clear(); location.reload();">Wipe Data</button>
+                    </div>
+                </div>
+            </section>
+        </main>
 
         <nav class="mobile-nav">
             <div class="m-nav-item active" data-view="tasks"><i class="fas fa-home"></i></div>
@@ -78,7 +112,6 @@
             <div class="m-nav-item" data-view="settings"><i class="fas fa-cog"></i></div>
         </nav>
     </div>
-
     <script src="script.js"></script>
 </body>
 </html>
