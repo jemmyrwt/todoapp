@@ -46,6 +46,8 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 // Connect to YOUR MongoDB Atlas
 const MONGODB_URI = process.env.MONGO_URI || 'mongodb+srv://jaiminravat:jaiminravat@todoclust0.g0maq65.mongodb.net/zenithDB?retryWrites=true&w=majority';
 
+console.log('🔗 Connecting to MongoDB Atlas...');
+
 mongoose.connect(MONGODB_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
@@ -68,9 +70,9 @@ mongoose.connect(MONGODB_URI, {
   }, 5000);
 });
 
-// Connection events
+// ✅ ADDED: Connection events with better logging
 mongoose.connection.on('error', err => {
-  console.error('❌ MongoDB Error:', err);
+  console.error('❌ MongoDB Error:', err.message);
 });
 
 mongoose.connection.on('disconnected', () => {
@@ -79,6 +81,12 @@ mongoose.connection.on('disconnected', () => {
 
 mongoose.connection.on('reconnected', () => {
   console.log('✅ MongoDB reconnected');
+});
+
+// ✅ ADDED: Log all incoming requests for debugging
+app.use((req, res, next) => {
+  console.log(`${new Date().toISOString()} ${req.method} ${req.url}`);
+  next();
 });
 
 // API Routes
