@@ -97,3 +97,29 @@ input:focus { border-color: var(--primary); box-shadow: 0 0 0 4px rgba(99, 102, 
 @media (max-width: 850px) {
     .app-shell { grid-template-columns: 1fr; }
 }
+/* Aapka purana CSS yahan rahega... bas niche wala add karo */
+
+.auth-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: var(--bg); display: flex; align-items: center; justify-content: center; z-index: 2000;
+}
+
+.auth-card {
+    background: var(--card); padding: 40px; border-radius: 24px; 
+    border: 1px solid var(--border); width: 100%; max-width: 400px; text-align: center;
+}
+
+.auth-card input {
+    width: 100%; background: var(--bg); border: 1px solid var(--border);
+    padding: 15px; border-radius: 12px; color: white; margin-bottom: 15px; outline: none;
+}
+
+#auth-main-btn {
+    width: 100%; background: var(--primary); color: white; border: none;
+    padding: 15px; border-radius: 12px; font-weight: 800; cursor: pointer; transition: 0.3s;
+}
+
+#auth-main-btn:hover { transform: scale(1.02); opacity: 0.9; }
+
+.toggle-auth { margin-top: 20px; color: var(--text-s); font-size: 0.9rem; cursor: pointer; }
+.toggle-auth span { color: var(--primary); font-weight: 700; }
