@@ -1,9 +1,10 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Zenith X Pro | Productivity Suite</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Zenith X Pro | Premium Productivity</title>
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -14,14 +15,20 @@
         <div class="auth-card">
             <div class="auth-logo"><i class="fas fa-bolt"></i></div>
             <h2 id="auth-title">Zenith X Pro</h2>
-            <p id="auth-desc">Login to sync your tasks</p>
-            <div id="reg-extra" style="display: none;">
-                <input type="text" id="auth-name" placeholder="Full Name">
+            <p id="auth-desc">Secure access to your dashboard</p>
+            
+            <div id="reg-extra" class="auth-extra-field">
+                <input type="text" id="auth-name" placeholder="Your Full Name">
             </div>
-            <input type="email" id="auth-email" placeholder="Email Address">
-            <input type="password" id="auth-pass" placeholder="Password">
-            <button id="auth-main-btn" onclick="handleAuth()">Access Dashboard</button>
-            <p class="toggle-auth" onclick="toggleAuthMode()">Don't have an account? <span>Sign Up</span></p>
+            
+            <input type="email" id="auth-email" placeholder="Email Address" required>
+            <input type="password" id="auth-pass" placeholder="Password" required>
+            
+            <button id="auth-main-btn" onclick="handleAuth()">Access Workspace</button>
+            
+            <p class="toggle-auth" onclick="toggleAuthMode()">
+                New to Zenith? <span id="toggle-text-span">Create Account</span>
+            </p>
         </div>
     </div>
 
@@ -34,8 +41,8 @@
             <nav class="side-nav">
                 <div class="nav-btn active" data-view="tasks"><i class="fas fa-list-check"></i> Tasks</div>
                 <div class="nav-btn" data-view="analytics"><i class="fas fa-chart-pie"></i> Analytics</div>
-                <div class="nav-btn" data-view="focus"><i class="fas fa-stopwatch"></i> Focus Mode</div>
-                <div class="nav-btn" data-view="settings"><i class="fas fa-sliders"></i> Settings</div>
+                <div class="nav-btn" data-view="focus"><i class="fas fa-stopwatch"></i> Focus</div>
+                <div class="nav-btn" data-view="settings"><i class="fas fa-cog"></i> Settings</div>
             </nav>
             <button class="logout-btn" onclick="logout()"><i class="fas fa-power-off"></i> Logout</button>
         </aside>
@@ -43,17 +50,26 @@
         <main class="workspace">
             <section id="view-tasks" class="view active">
                 <header class="view-header">
-                    <h1>My Tasks</h1>
+                    <h1>Command Center</h1>
                     <p id="live-clock"></p>
                 </header>
+                
                 <div class="task-creator">
                     <div class="input-row">
-                        <input type="text" id="taskTitle" placeholder="Enter task title...">
+                        <input type="text" id="taskTitle" placeholder="Deploy new objective...">
                         <button id="addBtn"><i class="fas fa-plus"></i></button>
                     </div>
                     <div class="meta-row">
-                        <select id="prioVal"><option value="low">Low Priority</option><option value="medium">Medium</option><option value="high">Urgent 🔥</option></select>
-                        <select id="catVal"><option value="Work">Work</option><option value="Personal">Personal</option><option value="Finance">Finance</option></select>
+                        <select id="prioVal">
+                            <option value="low">Low Priority</option>
+                            <option value="medium" selected>Normal</option>
+                            <option value="high">Urgent 🔥</option>
+                        </select>
+                        <select id="catVal">
+                            <option value="Work">Work</option>
+                            <option value="Personal">Personal</option>
+                            <option value="Finance">Finance</option>
+                        </select>
                         <input type="date" id="dateVal">
                     </div>
                 </div>
@@ -61,41 +77,46 @@
             </section>
 
             <section id="view-analytics" class="view">
-                <header class="view-header"><h1>Performance</h1></header>
+                <header class="view-header"><h1>Performance Data</h1></header>
                 <div class="stats-grid">
-                    <div class="stat-card"><h2 id="stat-total">0</h2><p>Total Tasks</p></div>
+                    <div class="stat-card"><h2 id="stat-total">0</h2><p>Total Missions</p></div>
                     <div class="stat-card"><h2 id="stat-efficiency" style="color: #6366f1;">0%</h2><p>Efficiency</p></div>
                 </div>
                 <div class="analytics-content">
-                    <div class="progress-ring-box">
-                        <svg width="150" height="150"><circle cx="75" cy="75" r="60" class="ring-bg"></circle><circle cx="75" cy="75" r="60" class="ring-fill" id="ring"></circle></svg>
+                    <div class="ring-container">
+                        <svg width="180" height="180">
+                            <circle cx="90" cy="90" r="75" class="ring-bg"></circle>
+                            <circle cx="90" cy="90" r="75" class="ring-fill" id="ring"></circle>
+                        </svg>
                         <div class="ring-text" id="ring-pct">0%</div>
                     </div>
-                    <h3>Overall Completion</h3>
+                    <h3>Overall Mission Success</h3>
                 </div>
             </section>
 
             <section id="view-focus" class="view">
-                <header class="view-header"><h1>Focus Session</h1></header>
+                <header class="view-header"><h1>Deep Focus</h1></header>
                 <div class="focus-box">
-                    <div class="timer-circle"><div class="timer-display" id="timer-display">25:00</div></div>
+                    <div class="timer-display-wrap">
+                        <div class="timer-display" id="timer-display">25:00</div>
+                    </div>
                     <div class="timer-controls">
-                        <button id="timer-start" class="btn-primary">Start Focus</button>
+                        <button id="timer-start" class="btn-primary">Initiate Focus</button>
                         <button id="timer-reset" class="btn-outline">Reset</button>
                     </div>
                 </div>
             </section>
 
             <section id="view-settings" class="view">
-                <header class="view-header"><h1>Settings</h1></header>
+                <header class="view-header"><h1>Configuration</h1></header>
                 <div class="settings-list">
                     <div class="setting-item">
-                        <div class="s-info"><h4>Appearance</h4><p>Dark/Light mode</p></div>
-                        <button class="btn-outline" onclick="toggleTheme()">Switch Theme</button>
+                        <div class="s-info"><h4>Visual Theme</h4><p>Switch Dark/Light interface</p></div>
+                        <button class="btn-outline" onclick="toggleTheme()">Toggle Mode</button>
                     </div>
                     <div class="setting-item danger">
-                        <div class="s-info"><h4>Data</h4><p>Clear Database</p></div>
-                        <button class="btn-danger" onclick="localStorage.clear(); location.reload();">Wipe Data</button>
+                        <div class="s-info"><h4>Data Control</h4><p>Wipe all local records</p></div>
+                        <button class="btn-danger" onclick="wipeData()">Wipe Database</button>
                     </div>
                 </div>
             </section>
@@ -108,6 +129,7 @@
             <div class="m-nav-item" data-view="settings"><i class="fas fa-cog"></i></div>
         </nav>
     </div>
+
     <script src="script.js"></script>
 </body>
 </html>
