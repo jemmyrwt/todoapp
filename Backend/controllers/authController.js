@@ -6,7 +6,26 @@ const jwt = require('jsonwebtoken');
 // @access  Public
 exports.register = async (req, res) => {
   try {
+    console.log('📝 Registration attempt:', req.body);
+    
     const { name, email, password } = req.body;
+
+    // Validate input
+    if (!name || !email || !password) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide name, email and password'
+      });
+    }
+
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide a valid email address'
+      });
+    }
 
     // Check if user exists
     const userExists = await User.findOne({ email });
@@ -20,9 +39,11 @@ exports.register = async (req, res) => {
     // Create user
     const user = await User.create({
       name,
-      email,
+      email: email.toLowerCase(),
       password
     });
+
+    console.log('✅ User created:', user.email);
 
     // Generate token - ✅ Uses User.js method
     const token = user.generateAuthToken();
@@ -45,7 +66,7 @@ exports.register = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Registration error:', error);
+    console.error('❌ Registration error:', error);
     res.status(500).json({
       success: false,
       message: 'Server error during registration'
@@ -58,10 +79,20 @@ exports.register = async (req, res) => {
 // @access  Public
 exports.login = async (req, res) => {
   try {
+    console.log('🔑 Login attempt:', req.body);
+    
     const { email, password } = req.body;
 
+    // Validate input
+    if (!email || !password) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide email and password'
+      });
+    }
+
     // Check if user exists
-    const user = await User.findOne({ email }).select('+password');
+    const user = await User.findOne({ email: email.toLowerCase() }).select('+password');
     if (!user) {
       return res.status(401).json({
         success: false,
@@ -77,6 +108,8 @@ exports.login = async (req, res) => {
         message: 'Invalid credentials'
       });
     }
+
+    console.log('✅ Login successful for:', user.email);
 
     // Generate token - ✅ Uses User.js method
     const token = user.generateAuthToken();
@@ -99,7 +132,7 @@ exports.login = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Login error:', error);
+    console.error('❌ Login error:', error);
     res.status(500).json({
       success: false,
       message: 'Server error during login'
@@ -138,7 +171,7 @@ exports.getMe = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Get user error:', error);
+    console.error('❌ Get user error:', error);
     res.status(500).json({
       success: false,
       message: 'Server error'
@@ -154,6 +187,7 @@ exports.updateSettings = async (req, res) => {
     const { theme, soundEnabled, autosaveEnabled, remindersEnabled } = req.body;
     
     console.log('⚙️ Updating settings for user:', req.userId);
+    console.log('📦 Settings data:', req.body);
     
     const user = await User.findById(req.userId);
     
@@ -166,7 +200,7 @@ exports.updateSettings = async (req, res) => {
 
     // Update settings
     user.settings = {
-      theme: theme || user.settings.theme,
+      theme: theme !== undefined ? theme : user.settings.theme,
       soundEnabled: soundEnabled !== undefined ? soundEnabled : user.settings.soundEnabled,
       autosaveEnabled: autosaveEnabled !== undefined ? autosaveEnabled : user.settings.autosaveEnabled,
       remindersEnabled: remindersEnabled !== undefined ? remindersEnabled : user.settings.remindersEnabled
@@ -183,7 +217,7 @@ exports.updateSettings = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Update settings error:', error);
+    console.error('❌ Update settings error:', error);
     res.status(500).json({
       success: false,
       message: 'Server error'
@@ -197,6 +231,9 @@ exports.updateSettings = async (req, res) => {
 exports.updateProfile = async (req, res) => {
   try {
     const { name, avatar } = req.body;
+    
+    console.log('🔄 Updating profile for user:', req.userId);
+    console.log('📦 Profile data:', req.body);
     
     const user = await User.findById(req.userId);
     
@@ -224,7 +261,7 @@ exports.updateProfile = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Update profile error:', error);
+    console.error('❌ Update profile error:', error);
     res.status(500).json({
       success: false,
       message: 'Server error'
@@ -239,6 +276,22 @@ exports.changePassword = async (req, res) => {
   try {
     const { currentPassword, newPassword } = req.body;
     
+    console.log('🔐 Changing password for user:', req.userId);
+    
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide current and new password'
+      });
+    }
+    
+    if (newPassword.length < 6) {
+      return res.status(400).json({
+        success: false,
+        message: 'New password must be at least 6 characters'
+      });
+    }
+
     const user = await User.findById(req.userId).select('+password');
     
     if (!user) {
@@ -267,7 +320,62 @@ exports.changePassword = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Change password error:', error);
+    console.error('❌ Change password error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error'
+    });
+  }
+};
+
+// @desc    Logout user
+// @route   POST /api/auth/logout
+// @access  Private
+exports.logout = async (req, res) => {
+  try {
+    console.log('🚪 Logging out user:', req.userId);
+    
+    // In a real app, you might want to blacklist the token
+    // For now, we just send success response
+    // The client should remove the token from localStorage
+    
+    res.json({
+      success: true,
+      message: 'Logged out successfully'
+    });
+
+  } catch (error) {
+    console.error('❌ Logout error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error'
+    });
+  }
+};
+
+// @desc    Check if email exists
+// @route   POST /api/auth/check-email
+// @access  Public
+exports.checkEmail = async (req, res) => {
+  try {
+    const { email } = req.body;
+    
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide email'
+      });
+    }
+    
+    const userExists = await User.findOne({ email: email.toLowerCase() });
+    
+    res.json({
+      success: true,
+      exists: !!userExists
+    });
+
+  } catch (error) {
+    console.error('❌ Check email error:', error);
     res.status(500).json({
       success: false,
       message: 'Server error'
