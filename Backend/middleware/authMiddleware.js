@@ -9,13 +9,14 @@ const authMiddleware = async (req, res, next) => {
       throw new Error();
     }
 
-    // Verify token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'zenith_pro_secret_key');
+    // Verify token - SAME SECRET AS User.js
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'jaimin_elite_786'); // ← Yaha change
     req.userId = decoded.userId;
     req.userEmail = decoded.email;
     
     next();
   } catch (error) {
+    console.error('Auth middleware error:', error.message);
     res.status(401).json({
       success: false,
       message: 'Please authenticate'
