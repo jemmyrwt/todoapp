@@ -6,21 +6,52 @@ const authMiddleware = async (req, res, next) => {
     const token = req.header('Authorization')?.replace('Bearer ', '');
     
     if (!token) {
-      throw new Error();
+      return res.status(401).json({
+        success: false,
+        message: 'No token provided'
+      });
     }
 
-    // ✅ CHANGE THIS LINE - Match with User.js
+    // ✅ FIXED: Using same secret as User.js
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'jaimin_elite_786');
+    
+    // Check if decoded has userId
+    if (!decoded.userId) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid token structure'
+      });
+    }
     
     req.userId = decoded.userId;
     req.userEmail = decoded.email;
+    req.userName = decoded.name;
     
+    console.log(`🔐 Authenticated user: ${decoded.email} (${decoded.userId})`);
     next();
+    
   } catch (error) {
-    console.error('Auth middleware error:', error.message);
+    console.error('🔴 Auth middleware error:', error.message);
+    
+    // Specific error handling
+    if (error.name === 'TokenExpiredError') {
+      return res.status(401).json({
+        success: false,
+        message: 'Token expired, please login again'
+      });
+    }
+    
+    if (error.name === 'JsonWebTokenError') {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid token'
+      });
+    }
+    
+    // Generic error
     res.status(401).json({
       success: false,
-      message: 'Please authenticate'
+      message: 'Authentication failed'
     });
   }
 };
