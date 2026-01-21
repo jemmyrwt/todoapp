@@ -1,125 +1,310 @@
-
+/* --- ZENITH X PRO | ULTIMATE AESTHETIC CSS --- */
 :root {
     --primary: #6366f1;
+    --primary-light: #818cf8;
     --accent: #a855f7;
-    --bg: #0f172a;
-    --card: rgba(30, 41, 59, 0.7);
+    --bg: #070912;
+    --card: rgba(17, 24, 39, 0.7);
+    --card-hover: rgba(30, 41, 59, 0.9);
     --text: #f8fafc;
     --text-dim: #94a3b8;
-    --danger: #ef4444;
-    --success: #10b981;
-    --border: rgba(255, 255, 255, 0.1);
+    --border: rgba(255, 255, 255, 0.08);
+    --border-hover: rgba(99, 102, 241, 0.4);
+    --danger: #ff4757;
+    --success: #00d2d3;
+    --panel-blur: blur(20px);
 }
 
-* { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
+/* 1. Global Reset & Scrollbar */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    -webkit-tap-highlight-color: transparent;
+}
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: var(--primary); }
 
 body {
-    background-color: var(--bg);
-    background-image: radial-gradient(circle at 50% 0%, #1e1b4b 0%, var(--bg) 100%);
+    background: var(--bg);
     color: var(--text);
     min-height: 100vh;
+    overflow-x: hidden;
+    /* Premium Animated Background */
+    background: radial-gradient(circle at 0% 0%, #1e1b4b 0%, transparent 40%),
+                radial-gradient(circle at 100% 100%, #2e1065 0%, transparent 40%),
+                radial-gradient(circle at 50% 50%, #070912 0%, #070912 100%);
 }
 
-/* Auth Page Styling */
-.auth-container {
-    height: 100vh;
+/* 2. Auth Overlay (Login Screen) */
+.auth-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(7, 9, 18, 0.9);
+    backdrop-filter: blur(15px);
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 20px;
+    z-index: 9999;
 }
 
 .auth-card {
     background: var(--card);
-    backdrop-filter: blur(12px);
-    padding: 40px;
-    border-radius: 24px;
     border: 1px solid var(--border);
-    width: 100%;
-    max-width: 400px;
+    padding: 45px;
+    border-radius: 32px;
+    width: 90%;
+    max-width: 420px;
     text-align: center;
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8);
+    animation: authSlideUp 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
-.auth-card h2 { font-size: 2rem; margin-bottom: 10px; font-weight: 800; }
-.auth-card p { color: var(--text-dim); margin-bottom: 30px; font-size: 0.9rem; }
+@keyframes authSlideUp {
+    from { opacity: 0; transform: translateY(30px) scale(0.95); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
 
-input {
+.auth-card h2 {
+    font-size: 2.2rem;
+    font-weight: 800;
+    background: linear-gradient(to right, #fff, var(--primary-light));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 8px;
+}
+
+.auth-card input {
     width: 100%;
-    background: rgba(15, 23, 42, 0.6);
+    background: rgba(0, 0, 0, 0.3);
     border: 1px solid var(--border);
-    padding: 14px 18px;
-    border-radius: 12px;
+    padding: 16px 20px;
+    border-radius: 16px;
     color: white;
-    margin-bottom: 15px;
+    margin-bottom: 16px;
     outline: none;
+    font-size: 1rem;
     transition: 0.3s;
 }
 
-input:focus { border-color: var(--primary); box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.2); }
-
-#auth-btn {
-    width: 100%;
-    background: linear-gradient(135deg, var(--primary), var(--accent));
-    color: white;
-    border: none;
-    padding: 14px;
-    border-radius: 12px;
-    font-weight: 700;
-    cursor: pointer;
-    font-size: 1rem;
-    box-shadow: 0 10px 15px -3px rgba(99, 102, 241, 0.4);
+.auth-card input:focus {
+    border-color: var(--primary);
+    background: rgba(99, 102, 241, 0.05);
+    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.15);
 }
 
-.toggle-text { margin-top: 20px; color: var(--text-dim); font-size: 0.85rem; cursor: pointer; }
-.toggle-text span { color: var(--primary); font-weight: 600; }
+#auth-main-btn {
+    width: 100%;
+    padding: 16px;
+    background: linear-gradient(135deg, var(--primary), var(--accent));
+    border: none;
+    border-radius: 16px;
+    color: white;
+    font-weight: 700;
+    font-size: 1.1rem;
+    cursor: pointer;
+    box-shadow: 0 10px 20px -5px rgba(99, 102, 241, 0.5);
+    transition: 0.3s;
+}
 
-/* Main App Layout */
+#auth-main-btn:hover { transform: translateY(-2px); box-shadow: 0 15px 30px -5px rgba(99, 102, 241, 0.6); }
+
+/* 3. Main Layout Shell */
 .app-shell {
     display: grid;
     grid-template-columns: 280px 1fr;
     height: 100vh;
 }
 
-/* Re-using your previous aesthetic task card CSS but updated for Glass look */
-.task-card {
-    background: var(--card);
-    backdrop-filter: blur(8px);
-    border: 1px solid var(--border);
-    border-radius: 20px;
-    padding: 20px;
-    margin-bottom: 15px;
+/* Sidebar Styling */
+.sidebar {
+    background: rgba(10, 15, 28, 0.8);
+    backdrop-filter: var(--panel-blur);
+    border-right: 1px solid var(--border);
+    padding: 40px 24px;
+    display: flex;
+    flex-direction: column;
+}
+
+.logo {
     display: flex;
     align-items: center;
-    gap: 15px;
+    gap: 16px;
+    margin-bottom: 48px;
 }
 
-@media (max-width: 850px) {
+.logo-box {
+    width: 44px;
+    height: 44px;
+    background: linear-gradient(135deg, var(--primary), var(--accent));
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    color: white;
+    box-shadow: 0 8px 16px var(--primary-glow);
+}
+
+.logo span { font-size: 1.6rem; font-weight: 800; letter-spacing: -0.5px; }
+
+.nav-btn {
+    padding: 14px 18px;
+    border-radius: 16px;
+    cursor: pointer;
+    color: var(--text-dim);
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 8px;
+    font-weight: 600;
+    transition: 0.2s;
+}
+
+.nav-btn i { font-size: 1.2rem; }
+.nav-btn:hover, .nav-btn.active {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--primary-light);
+}
+.nav-btn.active { background: rgba(99, 102, 241, 0.1); border: 1px solid rgba(99, 102, 241, 0.1); }
+
+/* 4. Workspace & Views */
+.workspace {
+    padding: 40px;
+    overflow-y: auto;
+    position: relative;
+}
+
+.view-header { margin-bottom: 40px; }
+.view-header h1 { font-size: 2.8rem; font-weight: 800; letter-spacing: -1px; }
+#live-clock { color: var(--text-dim); font-weight: 500; margin-top: 4px; }
+
+/* Task Creator Panel */
+.task-creator {
+    background: var(--card);
+    backdrop-filter: var(--panel-blur);
+    padding: 30px;
+    border-radius: 28px;
+    border: 1px solid var(--border);
+    margin-bottom: 40px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+}
+
+.input-row { display: flex; gap: 15px; margin-bottom: 20px; }
+#taskTitle {
+    flex: 1;
+    background: rgba(0,0,0,0.2);
+    border: 1px solid var(--border);
+    padding: 18px 24px;
+    border-radius: 18px;
+    color: white;
+    font-size: 1.1rem;
+    outline: none;
+    transition: 0.3s;
+}
+#taskTitle:focus { border-color: var(--primary); background: rgba(0,0,0,0.4); }
+
+#addBtn {
+    width: 60px;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 18px;
+    cursor: pointer;
+    font-size: 1.4rem;
+    transition: 0.3s;
+}
+#addBtn:hover { transform: rotate(90deg) scale(1.1); background: var(--accent); }
+
+.meta-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
+.meta-row select, .meta-row input {
+    background: rgba(0,0,0,0.2);
+    border: 1px solid var(--border);
+    padding: 12px 16px;
+    border-radius: 14px;
+    color: var(--text-dim);
+    outline: none;
+    cursor: pointer;
+}
+
+/* 5. Task Cards */
+.task-grid { display: grid; gap: 16px; }
+.task-card {
+    background: var(--card);
+    backdrop-filter: var(--panel-blur);
+    padding: 24px;
+    border-radius: 24px;
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.task-card:hover {
+    transform: translateX(8px);
+    border-color: var(--border-hover);
+    background: var(--card-hover);
+    box-shadow: 0 15px 30px rgba(0,0,0,0.3);
+}
+
+.task-card h4 { font-size: 1.15rem; font-weight: 600; margin-bottom: 6px; }
+
+.prio-tag {
+    font-size: 0.7rem;
+    padding: 5px 12px;
+    border-radius: 8px;
+    text-transform: uppercase;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+}
+.prio-high { background: rgba(239, 68, 68, 0.15); color: #f87171; }
+.prio-medium { background: rgba(245, 158, 11, 0.15); color: #fbbf24; }
+.prio-low { background: rgba(16, 185, 129, 0.15); color: #34d399; }
+
+/* 6. Mobile Optimization */
+.mobile-nav { display: none; }
+
+@media (max-width: 900px) {
     .app-shell { grid-template-columns: 1fr; }
+    .sidebar { display: none; }
+    .workspace { padding: 25px 20px 120px 20px; }
+    .view-header h1 { font-size: 2.2rem; }
+    .meta-row { grid-template-columns: 1fr; }
+    
+    .mobile-nav {
+        display: flex;
+        position: fixed;
+        bottom: 25px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 92%;
+        background: rgba(15, 23, 42, 0.85);
+        backdrop-filter: blur(25px);
+        padding: 20px;
+        border-radius: 28px;
+        border: 1px solid var(--border);
+        justify-content: space-around;
+        z-index: 1000;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+    }
+    .m-nav-item { color: var(--text-dim); font-size: 1.5rem; transition: 0.3s; }
+    .m-nav-item.active { color: var(--primary-light); transform: translateY(-5px); }
 }
-/* Aapka purana CSS yahan rahega... bas niche wala add karo */
 
-.auth-overlay {
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background: var(--bg); display: flex; align-items: center; justify-content: center; z-index: 2000;
+.logout-btn {
+    margin-top: auto;
+    background: rgba(239, 68, 68, 0.05);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    color: var(--danger);
+    padding: 14px;
+    border-radius: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: 0.3s;
 }
-
-.auth-card {
-    background: var(--card); padding: 40px; border-radius: 24px; 
-    border: 1px solid var(--border); width: 100%; max-width: 400px; text-align: center;
-}
-
-.auth-card input {
-    width: 100%; background: var(--bg); border: 1px solid var(--border);
-    padding: 15px; border-radius: 12px; color: white; margin-bottom: 15px; outline: none;
-}
-
-#auth-main-btn {
-    width: 100%; background: var(--primary); color: white; border: none;
-    padding: 15px; border-radius: 12px; font-weight: 800; cursor: pointer; transition: 0.3s;
-}
-
-#auth-main-btn:hover { transform: scale(1.02); opacity: 0.9; }
-
-.toggle-auth { margin-top: 20px; color: var(--text-s); font-size: 0.9rem; cursor: pointer; }
-.toggle-auth span { color: var(--primary); font-weight: 700; }
+.logout-btn:hover { background: var(--danger); color: white; }
