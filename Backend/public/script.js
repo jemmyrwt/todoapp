@@ -1,150 +1,12 @@
-let tasks = [];
-let isLoginMode = true;
+let tasks = JSON.parse(localStorage.getItem('zenith_tasks')) || [];
 let timer;
 let timeLeft = 1500;
 
-// 1. Init & Auth Logic
-async function init() {
-    if(localStorage.getItem('token')) {
-        showApp();
-    }
+function init() {
+    renderTasks();
+    setupNavigation();
     updateClock();
     setInterval(updateClock, 1000);
-}
-
-function toggleAuthMode() {
-    isLoginMode = !isLoginMode;
-    document.getElementById('auth-title').innerText = isLoginMode ? "Zenith X Pro" : "Join Zenith X";
-    document.getElementById('reg-extra').style.display = isLoginMode ? "none" : "block";
-    document.getElementById('auth-main-btn').innerText = isLoginMode ? "Login" : "Sign Up";
-}
-
-async function handleAuth() {
-    const email = document.getElementById('auth-email').value;
-    const password = document.getElementById('auth-pass').value;
-    const name = document.getElementById('auth-name') ? document.getElementById('auth-name').value : "";
-
-    const endpoint = isLoginMode ? '/api/auth/login' : '/api/auth/register';
-    const payload = isLoginMode ? { email, password } : { name, email, password };
-
-    const res = await fetch(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-    });
-
-    const data = await res.json();
-    if(res.ok) {
-        if(isLoginMode) {
-            localStorage.setItem('token', data.token);
-            localStorage.setItem('userName', data.name);
-            showApp();
-        } else {
-            alert("Account Created! Please Login.");
-            toggleAuthMode();
-        }
-    } else { alert(data.error); }
-}
-
-function showApp() {
-    document.getElementById('auth-screen').style.display = 'none';
-    document.getElementById('app-content').style.display = 'grid';
-    document.getElementById('user-name-display').innerText = localStorage.getItem('userName');
-    fetchTasks();
-    setupNavigation();
-}
-
-function logout() {
-    localStorage.clear();
-    location.reload();
-}
-
-// 2. Task API Logic
-async function fetchTasks() {
-    const res = await fetch('/api/todos', {
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-    });
-    tasks = await res.json();
-    renderTasks();
-    updateAnalytics();
-}
-
-document.getElementById('addBtn').onclick = async () => {
-    const title = document.getElementById('taskTitle').value;
-    if(!title.trim()) return;
-    
-    await fetch('/api/todos', {
-        method: 'POST',
-        headers: { 
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify({
-            title,
-            prio: document.getElementById('prioVal').value,
-            cat: document.getElementById('catVal').value,
-            date: document.getElementById('dateVal').value || 'No Deadline'
-        })
-    });
-    document.getElementById('taskTitle').value = '';
-    fetchTasks();
-};
-
-async function toggleTask(id, current) {
-    await fetch(`/api/todos/${id}`, {
-        method: 'PUT',
-        headers: { 
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify({ done: !current })
-    });
-    fetchTasks();
-}
-
-async function deleteTask(id) {
-    await fetch(`/api/todos/${id}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-    });
-    fetchTasks();
-}
-
-// 3. UI Rendering
-function renderTasks() {
-    const grid = document.getElementById('taskGrid');
-    grid.innerHTML = '';
-    tasks.forEach(t => {
-        const div = document.createElement('div');
-        div.className = `task-card ${t.done ? 'done' : ''}`;
-        div.innerHTML = `
-            <div onclick="toggleTask('${t._id}', ${t.done})" style="cursor:pointer">
-                <i class="${t.done ? 'fas fa-check-circle' : 'far fa-circle'}" style="font-size:1.5rem; color:${t.done ? '#2ed573' : '#6366f1'}"></i>
-            </div>
-            <div style="flex:1">
-                <h4 style="${t.done ? 'text-decoration:line-through; opacity:0.5' : ''}">${t.title}</h4>
-                <div style="margin-top:5px">
-                    <span class="prio-tag prio-${t.prio}">${t.prio}</span>
-                    <small style="color:var(--text-s); margin-left:10px">#${t.cat} | ${t.date}</small>
-                </div>
-            </div>
-            <i class="fas fa-trash-alt" style="color:var(--danger); cursor:pointer" onclick="deleteTask('${t._id}')"></i>
-        `;
-        grid.appendChild(div);
-    });
-}
-
-// 4. Analytics & Utilities
-function updateAnalytics() {
-    const total = tasks.length;
-    const done = tasks.filter(t => t.done).length;
-    const pct = total === 0 ? 0 : Math.round((done / total) * 100);
-
-    document.getElementById('stat-total').innerText = total;
-    document.getElementById('stat-efficiency').innerText = pct + '%';
-    document.getElementById('ring-pct').innerText = pct + '%';
-    const offset = 377 - (377 * pct) / 100;
-    document.getElementById('ring').style.strokeDashoffset = offset;
 }
 
 function updateClock() {
@@ -160,31 +22,89 @@ function setupNavigation() {
             document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
             document.getElementById(`view-${viewId}`).classList.add('active');
             navs.forEach(n => n.classList.remove('active'));
-            btn.classList.add('active');
+            // Desktop aur Mobile dono buttons ko active karo
+            document.querySelectorAll(`[data-view="${viewId}"]`).forEach(el => el.classList.add('active'));
             if(viewId === 'analytics') updateAnalytics();
         };
     });
 }
 
-// 5. Timer Logic
-document.getElementById('timer-start').addEventListener('click', function() {
-    if(timer) {
-        clearInterval(timer);
-        timer = null;
-        this.innerText = 'Start Focus';
-    } else {
+document.getElementById('addBtn').onclick = () => {
+    const title = document.getElementById('taskTitle').value;
+    if(!title.trim()) return;
+    tasks.unshift({
+        id: Date.now(),
+        title, 
+        prio: document.getElementById('prioVal').value,
+        cat: document.getElementById('catVal').value,
+        date: document.getElementById('dateVal').value || 'No Deadline',
+        done: false
+    });
+    document.getElementById('taskTitle').value = '';
+    save();
+};
+
+function toggleTask(id) {
+    tasks = tasks.map(t => t.id === id ? {...t, done: !t.done} : t);
+    save();
+}
+
+function deleteTask(id) {
+    tasks = tasks.filter(t => t.id !== id);
+    save();
+}
+
+function save() {
+    localStorage.setItem('zenith_tasks', JSON.stringify(tasks));
+    renderTasks();
+    updateAnalytics();
+}
+
+function renderTasks() {
+    const grid = document.getElementById('taskGrid');
+    if(!grid) return;
+    grid.innerHTML = '';
+    tasks.forEach(t => {
+        const div = document.createElement('div');
+        div.className = `task-card`;
+        div.innerHTML = `
+            <div onclick="toggleTask(${t.id})" style="cursor:pointer">
+                <i class="${t.done ? 'fas fa-check-circle' : 'far fa-circle'}" style="font-size:1.5rem; color:${t.done ? '#2ed573' : '#6366f1'}"></i>
+            </div>
+            <div style="flex:1">
+                <h4 style="${t.done ? 'text-decoration:line-through; opacity:0.5' : ''}">${t.title}</h4>
+                <small style="color:var(--text-s)">${t.prio} | ${t.cat} | ${t.date}</small>
+            </div>
+            <i class="fas fa-trash-alt" style="color:var(--danger); cursor:pointer" onclick="deleteTask(${t.id})"></i>
+        `;
+        grid.appendChild(div);
+    });
+}
+
+function updateAnalytics() {
+    const total = tasks.length;
+    const done = tasks.filter(t => t.done).length;
+    const pct = total === 0 ? 0 : Math.round((done / total) * 100);
+    document.getElementById('stat-total').innerText = total;
+    document.getElementById('stat-efficiency').innerText = pct + '%';
+    document.getElementById('ring-pct').innerText = pct + '%';
+    document.getElementById('ring').style.strokeDashoffset = 377 - (377 * pct) / 100;
+}
+
+document.getElementById('timer-start').onclick = function() {
+    if(timer) { clearInterval(timer); timer = null; this.innerText = 'Start Focus'; }
+    else {
         timer = setInterval(() => {
             timeLeft--;
-            const m = Math.floor(timeLeft / 60);
-            const s = timeLeft % 60;
+            const m = Math.floor(timeLeft / 60); const s = timeLeft % 60;
             document.getElementById('timer-display').innerText = `${m}:${s < 10 ? '0' : ''}${s}`;
-            if(timeLeft === 0) {
-                clearInterval(timer);
-                alert("Focus Session Complete!");
-            }
         }, 1000);
-        this.innerText = 'Pause Session';
+        this.innerText = 'Pause';
     }
-});
+};
+
+function toggleTheme() {
+    document.body.setAttribute('data-theme', document.body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
+}
 
 init();
