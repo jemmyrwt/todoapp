@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 
 const userSchema = new mongoose.Schema({
   name: {
@@ -95,18 +96,12 @@ userSchema.pre('save', async function(next) {
   }
 });
 
-// Update timestamp on save
-userSchema.pre('save', function(next) {
-  this.updatedAt = Date.now();
-  next();
-});
-
 // Compare password method
 userSchema.methods.comparePassword = async function(candidatePassword) {
   return await bcrypt.compare(candidatePassword, this.password);
 };
 
-// Generate JWT token
+// ✅ FIXED: Generate JWT token with correct secret
 userSchema.methods.generateAuthToken = function() {
   return jwt.sign(
     { 
@@ -114,8 +109,8 @@ userSchema.methods.generateAuthToken = function() {
       email: this.email,
       name: this.name 
     },
-    process.env.JWT_SECRET || 'jaimin_elite_786',
-    { expiresIn: process.env.JWT_EXPIRE || '7d' }
+    process.env.JWT_SECRET || 'jaimin_elite_786', // ✅ Same as middleware
+    { expiresIn: '7d' }
   );
 };
 
