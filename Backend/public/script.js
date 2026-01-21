@@ -1,9 +1,7 @@
 // Zenith X Pro - Production Ready with Render
 // ✅ FIXED: Updated API base URL
 // LINE 4-7 CHANGE KARO:
-const API_BASE_URL = window.location.hostname.includes('localhost') 
-  ? 'http://localhost:10000/api' 
-  : 'https://todoapp-p5hq.onrender.com/api'; // ✅ YEH CHANGE KARO
+const API_BASE_URL = 'https://todoapp-p5hq.onrender.com/api'
 console.log('🌐 Current hostname:', window.location.hostname);
 console.log('📡 API Base URL:', API_BASE_URL);
 
