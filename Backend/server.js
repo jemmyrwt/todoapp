@@ -16,26 +16,25 @@ const app = express();
 
 // Security middleware
 app.use(helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://cdnjs.cloudflare.com"],
-      fontSrc: ["'self'", "https://fonts.gstatic.com", "https://cdnjs.cloudflare.com"],
-      scriptSrc: ["'self'", "'unsafe-inline'"],
-      imgSrc: ["'self'", "data:", "https:"]
-    }
-  }
+  contentSecurityPolicy: false // Temporarily disable for debugging
 }));
 
+// ✅ FIXED: Update CORS to allow all origins for debugging
 app.use(cors({
-  origin: ['https://todoapp-p5hq.onrender.com', 'http://localhost:3000'],
-  credentials: true
+  origin: '*',
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
+
+// Handle preflight requests
+app.options('*', cors());
 
 // Rate limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 100
+  max: 100,
+  message: 'Too many requests from this IP'
 });
 app.use('/api/', limiter);
 
@@ -43,15 +42,16 @@ app.use('/api/', limiter);
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Connect to YOUR MongoDB Atlas
-const MONGODB_URI = process.env.MONGO_URI || 'mongodb+srv://jaiminravat:jaiminravat@todoclust0.g0maq65.mongodb.net/zenithDB?retryWrites=true&w=majority';
+// ✅ FIXED: Use your MongoDB Atlas connection string
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://jaiminravat:jaiminravat@todoclust0.g0maq65.mongodb.net/zenithDB?retryWrites=true&w=majority';
 
 console.log('🔗 Connecting to MongoDB Atlas...');
+console.log('📦 Database URL:', MONGODB_URI.split('@')[0] + '@...');
 
 mongoose.connect(MONGODB_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
-  serverSelectionTimeoutMS: 5000,
+  serverSelectionTimeoutMS: 30000,
   socketTimeoutMS: 45000,
 })
 .then(() => {
@@ -70,7 +70,7 @@ mongoose.connect(MONGODB_URI, {
   }, 5000);
 });
 
-// ✅ ADDED: Connection events with better logging
+// ✅ ADDED: Connection events
 mongoose.connection.on('error', err => {
   console.error('❌ MongoDB Error:', err.message);
 });
@@ -115,7 +115,8 @@ app.get('*', (req, res) => {
 
 // Error handling middleware
 app.use((err, req, res, next) => {
-  console.error('🔥 Server Error:', err.stack);
+  console.error('🔥 Server Error:', err.message);
+  console.error(err.stack);
   
   // Mongoose validation error
   if (err.name === 'ValidationError') {
@@ -151,8 +152,8 @@ app.use((err, req, res, next) => {
 });
 
 const PORT = process.env.PORT || 10000;
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Zenith X Pro Server running on port ${PORT}`);
   console.log(`🌐 Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`🔗 MongoDB URI: ${MONGODB_URI.split('@')[0]}@...`);
+  console.log(`🔗 Server URL: http://localhost:${PORT}`);
 });
