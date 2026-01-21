@@ -1,81 +1,119 @@
 let tasks = [];
+let isLoginMode = true;
 let timer;
 let timeLeft = 1500;
-const API_URL = '/api/todos';
 
-// Init: Database se data lana
+// 1. Init & Auth Logic
 async function init() {
-    await fetchTasks(); // localStorage ki jagah DB se data ayega
-    setupNavigation();
+    if(localStorage.getItem('token')) {
+        showApp();
+    }
     updateClock();
     setInterval(updateClock, 1000);
 }
 
-async function fetchTasks() {
-    const token = localStorage.getItem('token');
-    if(!token) return console.log("User not logged in");
+function toggleAuthMode() {
+    isLoginMode = !isLoginMode;
+    document.getElementById('auth-title').innerText = isLoginMode ? "Zenith X Pro" : "Join Zenith X";
+    document.getElementById('reg-extra').style.display = isLoginMode ? "none" : "block";
+    document.getElementById('auth-main-btn').innerText = isLoginMode ? "Login" : "Sign Up";
+}
 
-    const res = await fetch(API_URL, {
-        headers: { 'Authorization': `Bearer ${token}` }
+async function handleAuth() {
+    const email = document.getElementById('auth-email').value;
+    const password = document.getElementById('auth-pass').value;
+    const name = document.getElementById('auth-name') ? document.getElementById('auth-name').value : "";
+
+    const endpoint = isLoginMode ? '/api/auth/login' : '/api/auth/register';
+    const payload = isLoginMode ? { email, password } : { name, email, password };
+
+    const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    });
+
+    const data = await res.json();
+    if(res.ok) {
+        if(isLoginMode) {
+            localStorage.setItem('token', data.token);
+            localStorage.setItem('userName', data.name);
+            showApp();
+        } else {
+            alert("Account Created! Please Login.");
+            toggleAuthMode();
+        }
+    } else { alert(data.error); }
+}
+
+function showApp() {
+    document.getElementById('auth-screen').style.display = 'none';
+    document.getElementById('app-content').style.display = 'grid';
+    document.getElementById('user-name-display').innerText = localStorage.getItem('userName');
+    fetchTasks();
+    setupNavigation();
+}
+
+function logout() {
+    localStorage.clear();
+    location.reload();
+}
+
+// 2. Task API Logic
+async function fetchTasks() {
+    const res = await fetch('/api/todos', {
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
     });
     tasks = await res.json();
     renderTasks();
     updateAnalytics();
 }
 
-// Add Task to MongoDB
-document.getElementById('addBtn').addEventListener('click', async () => {
+document.getElementById('addBtn').onclick = async () => {
     const title = document.getElementById('taskTitle').value;
-    const prio = document.getElementById('prioVal').value;
-    const cat = document.getElementById('catVal').value;
-    const date = document.getElementById('dateVal').value;
-
     if(!title.trim()) return;
-
-    const res = await fetch(API_URL, {
+    
+    await fetch('/api/todos', {
         method: 'POST',
         headers: { 
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${localStorage.getItem('token')}`
         },
-        body: JSON.stringify({ 
-            title, prio, cat, 
-            date: date || 'No Deadline' 
+        body: JSON.stringify({
+            title,
+            prio: document.getElementById('prioVal').value,
+            cat: document.getElementById('catVal').value,
+            date: document.getElementById('dateVal').value || 'No Deadline'
         })
     });
+    document.getElementById('taskTitle').value = '';
+    fetchTasks();
+};
 
-    if(res.ok) {
-        document.getElementById('taskTitle').value = '';
-        await fetchTasks();
-    }
-});
-
-async function toggleTask(id, currentStatus) {
-    await fetch(`${API_URL}/${id}`, {
+async function toggleTask(id, current) {
+    await fetch(`/api/todos/${id}`, {
         method: 'PUT',
         headers: { 
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${localStorage.getItem('token')}`
         },
-        body: JSON.stringify({ done: !currentStatus })
+        body: JSON.stringify({ done: !current })
     });
-    await fetchTasks();
+    fetchTasks();
 }
 
 async function deleteTask(id) {
-    await fetch(`${API_URL}/${id}`, {
+    await fetch(`/api/todos/${id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
     });
-    await fetchTasks();
+    fetchTasks();
 }
 
-// Render Tasks (Aapka original design)
+// 3. UI Rendering
 function renderTasks() {
     const grid = document.getElementById('taskGrid');
-    if(!grid) return;
     grid.innerHTML = '';
-
     tasks.forEach(t => {
         const div = document.createElement('div');
         div.className = `task-card ${t.done ? 'done' : ''}`;
@@ -96,11 +134,12 @@ function renderTasks() {
     });
 }
 
-// Baki ka aapka Analytics, Timer aur Navigation code yahan niche as-it-is rahega...
+// 4. Analytics & Utilities
 function updateAnalytics() {
     const total = tasks.length;
     const done = tasks.filter(t => t.done).length;
     const pct = total === 0 ? 0 : Math.round((done / total) * 100);
+
     document.getElementById('stat-total').innerText = total;
     document.getElementById('stat-efficiency').innerText = pct + '%';
     document.getElementById('ring-pct').innerText = pct + '%';
@@ -108,21 +147,26 @@ function updateAnalytics() {
     document.getElementById('ring').style.strokeDashoffset = offset;
 }
 
+function updateClock() {
+    const clock = document.getElementById('live-clock');
+    if(clock) clock.innerText = new Date().toLocaleTimeString() + " | " + new Date().toDateString();
+}
+
 function setupNavigation() {
     const navs = document.querySelectorAll('.nav-btn, .m-nav-item');
     navs.forEach(btn => {
-        btn.addEventListener('click', () => {
+        btn.onclick = () => {
             const viewId = btn.getAttribute('data-view');
             document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
             document.getElementById(`view-${viewId}`).classList.add('active');
             navs.forEach(n => n.classList.remove('active'));
             btn.classList.add('active');
             if(viewId === 'analytics') updateAnalytics();
-        });
+        };
     });
 }
 
-// Timer Logic (Same as yours)
+// 5. Timer Logic
 document.getElementById('timer-start').addEventListener('click', function() {
     if(timer) {
         clearInterval(timer);
@@ -134,7 +178,10 @@ document.getElementById('timer-start').addEventListener('click', function() {
             const m = Math.floor(timeLeft / 60);
             const s = timeLeft % 60;
             document.getElementById('timer-display').innerText = `${m}:${s < 10 ? '0' : ''}${s}`;
-            if(timeLeft === 0) clearInterval(timer);
+            if(timeLeft === 0) {
+                clearInterval(timer);
+                alert("Focus Session Complete!");
+            }
         }, 1000);
         this.innerText = 'Pause Session';
     }
