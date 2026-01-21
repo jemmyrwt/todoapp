@@ -1,13 +1,26 @@
 const jwt = require('jsonwebtoken');
-module.exports = (req, res, next) => {
-    const authHeader = req.header('Authorization');
-    if (!authHeader) return res.status(401).json({ error: "Access Denied" });
-    const token = authHeader.split(" ")[1];
-    try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'jaimin_elite_786');
-        req.user = decoded;
-        next();
-    } catch (err) {
-        res.status(401).json({ error: "Invalid Token" });
+
+const authMiddleware = async (req, res, next) => {
+  try {
+    // Get token from header
+    const token = req.header('Authorization')?.replace('Bearer ', '');
+    
+    if (!token) {
+      throw new Error();
     }
+
+    // Verify token
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'zenith_pro_secret_key');
+    req.userId = decoded.userId;
+    req.userEmail = decoded.email;
+    
+    next();
+  } catch (error) {
+    res.status(401).json({
+      success: false,
+      message: 'Please authenticate'
+    });
+  }
 };
+
+module.exports = authMiddleware;
