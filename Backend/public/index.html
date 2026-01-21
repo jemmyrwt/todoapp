@@ -59,7 +59,7 @@
                 
                 <div class="task-creator">
                     <div class="input-row">
-                        <input type="text" id="taskTitle" placeholder="Deploy new objective..." onkeypress="handleTaskKeyPress(event)">
+                        <input type="text" id="taskTitle" placeholder="Deploy new objective..." onkeypress="if(event.key === 'Enter') addTask()">
                         <button id="addBtn"><i class="fas fa-plus"></i></button>
                     </div>
                     <div class="meta-row">
@@ -228,7 +228,7 @@
                     <p style="margin-top: 15px; color: var(--txt-s);">Version 7.0 | Premium Productivity Suite</p>
                     <p style="color: var(--txt-s); margin-top: 5px;">© 2024 Zenith Technologies. All rights reserved.</p>
                     <div style="margin-top: 20px;">
-                        <button class="btn-outline" onclick="showKeyboardShortcuts()">
+                        <button class="btn-outline" onclick="showKeyboardShortcutsModal()">
                             <i class="fas fa-keyboard"></i> Keyboard Shortcuts
                         </button>
                     </div>
@@ -260,7 +260,7 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h2>Keyboard Shortcuts</h2>
-                    <button class="modal-close" onclick="closeModal()">×</button>
+                    <button class="modal-close" onclick="closeShortcutsModal()">×</button>
                 </div>
                 <div class="modal-body">
                     <div class="shortcut-item">
@@ -287,6 +287,7 @@
             </div>
         </div>
     </div>
+
 <!-- Network Status Indicator -->
 <div id="network-status"></div>
 
@@ -297,6 +298,7 @@
     <p>Syncing...</p>
   </div>
 </div>
-    <script src="script.js"></script>
+
+<script src="script.js"></script>
 </body>
 </html>
