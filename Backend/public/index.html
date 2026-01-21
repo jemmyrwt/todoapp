@@ -10,7 +10,22 @@
 </head>
 <body data-theme="dark">
 
-    <div class="app-shell">
+    <div id="auth-screen" class="auth-overlay">
+        <div class="auth-card">
+            <div class="auth-logo"><i class="fas fa-bolt"></i></div>
+            <h2 id="auth-title">Zenith X Pro</h2>
+            <p id="auth-desc">Login to sync your tasks</p>
+            <div id="reg-extra" style="display: none;">
+                <input type="text" id="auth-name" placeholder="Full Name">
+            </div>
+            <input type="email" id="auth-email" placeholder="Email Address">
+            <input type="password" id="auth-pass" placeholder="Password">
+            <button id="auth-main-btn" onclick="handleAuth()">Access Dashboard</button>
+            <p class="toggle-auth" onclick="toggleAuthMode()">Don't have an account? <span>Sign Up</span></p>
+        </div>
+    </div>
+
+    <div class="app-shell" id="app-content" style="display: none;">
         <aside class="sidebar">
             <div class="logo">
                 <div class="logo-box"><i class="fas fa-bolt"></i></div>
@@ -22,6 +37,7 @@
                 <div class="nav-btn" data-view="focus"><i class="fas fa-stopwatch"></i> Focus Mode</div>
                 <div class="nav-btn" data-view="settings"><i class="fas fa-sliders"></i> Settings</div>
             </nav>
+            <button class="logout-btn" onclick="logout()"><i class="fas fa-power-off"></i> Logout</button>
         </aside>
 
         <main class="workspace">
@@ -30,23 +46,14 @@
                     <h1>My Tasks</h1>
                     <p id="live-clock"></p>
                 </header>
-
                 <div class="task-creator">
                     <div class="input-row">
                         <input type="text" id="taskTitle" placeholder="Enter task title...">
                         <button id="addBtn"><i class="fas fa-plus"></i></button>
                     </div>
                     <div class="meta-row">
-                        <select id="prioVal">
-                            <option value="low">Low Priority</option>
-                            <option value="medium">Medium</option>
-                            <option value="high">Urgent 🔥</option>
-                        </select>
-                        <select id="catVal">
-                            <option value="Work">Work</option>
-                            <option value="Personal">Personal</option>
-                            <option value="Finance">Finance</option>
-                        </select>
+                        <select id="prioVal"><option value="low">Low Priority</option><option value="medium">Medium</option><option value="high">Urgent 🔥</option></select>
+                        <select id="catVal"><option value="Work">Work</option><option value="Personal">Personal</option><option value="Finance">Finance</option></select>
                         <input type="date" id="dateVal">
                     </div>
                 </div>
@@ -56,21 +63,12 @@
             <section id="view-analytics" class="view">
                 <header class="view-header"><h1>Performance</h1></header>
                 <div class="stats-grid">
-                    <div class="stat-card">
-                        <h2 id="stat-total">0</h2>
-                        <p>Total Tasks</p>
-                    </div>
-                    <div class="stat-card">
-                        <h2 id="stat-efficiency" style="color: #6366f1;">0%</h2>
-                        <p>Efficiency</p>
-                    </div>
+                    <div class="stat-card"><h2 id="stat-total">0</h2><p>Total Tasks</p></div>
+                    <div class="stat-card"><h2 id="stat-efficiency" style="color: #6366f1;">0%</h2><p>Efficiency</p></div>
                 </div>
                 <div class="analytics-content">
                     <div class="progress-ring-box">
-                        <svg width="150" height="150">
-                            <circle cx="75" cy="75" r="60" class="ring-bg"></circle>
-                            <circle cx="75" cy="75" r="60" class="ring-fill" id="ring"></circle>
-                        </svg>
+                        <svg width="150" height="150"><circle cx="75" cy="75" r="60" class="ring-bg"></circle><circle cx="75" cy="75" r="60" class="ring-fill" id="ring"></circle></svg>
                         <div class="ring-text" id="ring-pct">0%</div>
                     </div>
                     <h3>Overall Completion</h3>
@@ -80,9 +78,7 @@
             <section id="view-focus" class="view">
                 <header class="view-header"><h1>Focus Session</h1></header>
                 <div class="focus-box">
-                    <div class="timer-circle">
-                        <div class="timer-display" id="timer-display">25:00</div>
-                    </div>
+                    <div class="timer-circle"><div class="timer-display" id="timer-display">25:00</div></div>
                     <div class="timer-controls">
                         <button id="timer-start" class="btn-primary">Start Focus</button>
                         <button id="timer-reset" class="btn-outline">Reset</button>
