@@ -1,8 +1,8 @@
 // Zenith X Pro - Production Ready with Render
-// ✅ FIXED: Updated API base URL
-// LINE 4-7 CHANGE KARO:
-const API_BASE_URL = 'https://todoapp-p5hq.onrender.com/api'
-console.log('🌐 Current hostname:', window.location.hostname);
+// ✅ FIXED: Correct API URL for Render
+const API_BASE_URL = 'https://todoapp-p5hq.onrender.com/api';
+
+console.log('🌐 Zenith X Pro Loading...');
 console.log('📡 API Base URL:', API_BASE_URL);
 
 let tasks = [];
@@ -552,7 +552,7 @@ async function syncDataIfOnline() {
 // 12. Server Health Check
 async function checkServerHealth() {
   try {
-    const response = await fetch(`${API_BASE_URL.replace('/api', '')}/api/health`);
+    const response = await fetch(`${API_BASE_URL}/health`);
     if (response.ok) {
       console.log('✅ Server is healthy');
     } else {
@@ -877,11 +877,6 @@ function startTimer() {
         localStorage.setItem('zenith_focus_sessions', focusSessions);
         localStorage.setItem('zenith_total_focus_time', totalFocusTime);
         updateFocusStats();
-        
-        // Play sound if enabled
-        if (soundEnabled) {
-          playTimerSound();
-        }
       }
     }, 1000);
   }
@@ -914,29 +909,6 @@ function updateFocusStats() {
   }
   if (totalFocusTimeEl) {
     totalFocusTimeEl.textContent = `${Math.floor(totalFocusTime / 60)}m Total`;
-  }
-}
-
-function playTimerSound() {
-  // Simple beep sound
-  try {
-    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    const oscillator = audioContext.createOscillator();
-    const gainNode = audioContext.createGain();
-    
-    oscillator.connect(gainNode);
-    gainNode.connect(audioContext.destination);
-    
-    oscillator.frequency.value = 800;
-    oscillator.type = 'sine';
-    
-    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
-    
-    oscillator.start(audioContext.currentTime);
-    oscillator.stop(audioContext.currentTime + 0.5);
-  } catch (e) {
-    console.log('Audio not supported');
   }
 }
 
@@ -1104,7 +1076,7 @@ async function logout() {
   }
 }
 
-// 25. Modal Functions (YEH ADD KARO)
+// 25. Modal Functions
 function showKeyboardShortcutsModal() {
   document.getElementById('shortcuts-modal').classList.add('show');
 }
@@ -1113,7 +1085,7 @@ function closeShortcutsModal() {
   document.getElementById('shortcuts-modal').classList.remove('show');
 }
 
-// 26. Export Data Function (YEH ADD KARO)
+// 26. Export Data Function
 async function exportData() {
   try {
     const dataToExport = {
@@ -1151,7 +1123,7 @@ async function exportData() {
   }
 }
 
-// 27. Wipe Data Function (YEH ADD KARO)
+// 27. Wipe Data Function
 function wipeData() {
   if (confirm('⚠️ This will delete ALL your local data. Are you sure?')) {
     localStorage.clear();
@@ -1165,7 +1137,7 @@ function wipeData() {
   }
 }
 
-// 28. Loading Overlay Functions (YEH ADD KARO)
+// 28. Loading Overlay Functions
 function showLoading(message = 'Syncing...') {
   const overlay = document.getElementById('loading-overlay');
   if (overlay) {
