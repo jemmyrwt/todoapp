@@ -14,27 +14,27 @@ const focusRoutes = require('./routes/focusRoutes');
 
 const app = express();
 
-// Security middleware
-app.use(helmet({
-  contentSecurityPolicy: false // Temporarily disable for debugging
-}));
-
-// ✅ FIXED: Update CORS to allow all origins for debugging
+// ✅ FIXED: CORS Configuration for mobile access
 app.use(cors({
-  origin: '*',
-  credentials: true,
+  origin: '*', // Allow all origins for mobile
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
+  credentials: true
 }));
 
 // Handle preflight requests
 app.options('*', cors());
 
+// Security middleware
+app.use(helmet({
+  contentSecurityPolicy: false // Temporarily disable for debugging
+}));
+
 // Rate limiting
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 100,
-  message: 'Too many requests from this IP'
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per windowMs
+  message: 'Too many requests from this IP, please try again later.'
 });
 app.use('/api/', limiter);
 
@@ -42,16 +42,15 @@ app.use('/api/', limiter);
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// ✅ FIXED: Use your MongoDB Atlas connection string
+// Connect to YOUR MongoDB Atlas
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://jaiminravat:jaiminravat@todoclust0.g0maq65.mongodb.net/zenithDB?retryWrites=true&w=majority';
 
 console.log('🔗 Connecting to MongoDB Atlas...');
-console.log('📦 Database URL:', MONGODB_URI.split('@')[0] + '@...');
 
 mongoose.connect(MONGODB_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
-  serverSelectionTimeoutMS: 30000,
+  serverSelectionTimeoutMS: 5000,
   socketTimeoutMS: 45000,
 })
 .then(() => {
@@ -70,7 +69,7 @@ mongoose.connect(MONGODB_URI, {
   }, 5000);
 });
 
-// ✅ ADDED: Connection events
+// ✅ ADDED: Connection events with better logging
 mongoose.connection.on('error', err => {
   console.error('❌ MongoDB Error:', err.message);
 });
@@ -89,7 +88,7 @@ app.use((req, res, next) => {
   next();
 });
 
-// API Routes
+// ✅ FIXED: API ROUTES MUST COME BEFORE STATIC FILES
 app.use('/api/auth', authRoutes);
 app.use('/api/todos', todoRoutes);
 app.use('/api/notes', noteRoutes);
@@ -105,18 +104,17 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// Serve static files
+// Serve static files - THIS COMES AFTER API ROUTES
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Serve index.html for all other routes (SPA support)
+// Serve index.html for all other routes (SPA support) - THIS COMES LAST
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 // Error handling middleware
 app.use((err, req, res, next) => {
-  console.error('🔥 Server Error:', err.message);
-  console.error(err.stack);
+  console.error('🔥 Server Error:', err.stack);
   
   // Mongoose validation error
   if (err.name === 'ValidationError') {
@@ -152,8 +150,9 @@ app.use((err, req, res, next) => {
 });
 
 const PORT = process.env.PORT || 10000;
-app.listen(PORT, '0.0.0.0', () => {
+app.listen(PORT, () => {
   console.log(`🚀 Zenith X Pro Server running on port ${PORT}`);
   console.log(`🌐 Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`🔗 Server URL: http://localhost:${PORT}`);
+  console.log(`🔗 Server URL: https://todoapp-p5hq.onrender.com`);
+  console.log(`📡 API Base URL: https://todoapp-p5hq.onrender.com/api`);
 });
