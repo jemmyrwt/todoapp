@@ -9,8 +9,9 @@ const authMiddleware = async (req, res, next) => {
       throw new Error();
     }
 
-    // Verify token - SAME SECRET AS User.js
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'jaimin_elite_786'); // ← Yaha change
+    // ✅ CHANGE THIS LINE - Match with User.js
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'jaimin_elite_786');
+    
     req.userId = decoded.userId;
     req.userEmail = decoded.email;
     
