@@ -1,7 +1,16 @@
 const express = require('express');
 const router = express.Router();
 const authController = require('../controllers/authController');
-const authMiddleware = require('../middleware/authMiddleware');
+const { authMiddleware } = require('../middleware/authMiddleware');
+
+// ✅ FIXED: Add test route for debugging
+router.get('/test', (req, res) => {
+    res.json({
+        success: true,
+        message: 'Auth route is working',
+        timestamp: new Date().toISOString()
+    });
+});
 
 // Public routes
 router.post('/register', authController.register);
