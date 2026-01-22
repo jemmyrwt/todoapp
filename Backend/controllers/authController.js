@@ -1,6 +1,6 @@
 const User = require('../models/User');
 const jwt = require('jsonwebtoken');
-const bcrypt = require('bcryptjs'); // ✅ ADDED
+const bcrypt = require('bcryptjs');
 
 // @desc    Register user
 // @route   POST /api/auth/register
@@ -11,7 +11,6 @@ exports.register = async (req, res) => {
     
     const { name, email, password } = req.body;
 
-    // Validate input
     if (!name || !email || !password) {
       return res.status(400).json({
         success: false,
@@ -19,7 +18,6 @@ exports.register = async (req, res) => {
       });
     }
 
-    // Email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       return res.status(400).json({
@@ -28,7 +26,6 @@ exports.register = async (req, res) => {
       });
     }
 
-    // Check if user exists
     const userExists = await User.findOne({ email });
     if (userExists) {
       return res.status(400).json({
@@ -37,24 +34,19 @@ exports.register = async (req, res) => {
       });
     }
 
-    // ✅✅✅ FIXED: Hash password before saving
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    // Create user
     const user = await User.create({
       name,
       email: email.toLowerCase(),
-      password: hashedPassword // ✅ HASHED PASSWORD
+      password: hashedPassword
     });
 
     console.log('✅ User created:', user.email);
-    console.log('🔐 Password hash:', user.password.substring(0, 20) + '...');
 
-    // Generate token
     const token = user.generateAuthToken();
 
-    // Update last active
     user.lastActive = Date.now();
     await user.save();
 
@@ -89,7 +81,6 @@ exports.login = async (req, res) => {
     
     const { email, password } = req.body;
 
-    // Validate input
     if (!email || !password) {
       return res.status(400).json({
         success: false,
@@ -97,7 +88,6 @@ exports.login = async (req, res) => {
       });
     }
 
-    // Check if user exists
     const user = await User.findOne({ email: email.toLowerCase() }).select('+password');
     
     if (!user) {
@@ -109,9 +99,7 @@ exports.login = async (req, res) => {
     }
 
     console.log('🔍 User found:', user.email);
-    console.log('🔐 Stored hash:', user.password.substring(0, 20) + '...');
 
-    // ✅✅✅ FIXED: Use bcrypt.compare directly
     const isMatch = await bcrypt.compare(password, user.password);
     
     console.log('✅ Password valid:', isMatch);
@@ -125,14 +113,11 @@ exports.login = async (req, res) => {
 
     console.log('🎉 Login successful for:', user.email);
 
-    // Generate token
     const token = user.generateAuthToken();
 
-    // Update last active
     user.lastActive = Date.now();
     await user.save();
 
-    // Remove password from response
     const userWithoutPassword = user.toObject();
     delete userWithoutPassword.password;
 
@@ -209,7 +194,6 @@ exports.updateSettings = async (req, res) => {
       });
     }
 
-    // Update settings
     user.settings = {
       theme: theme || user.settings.theme,
       soundEnabled: soundEnabled !== undefined ? soundEnabled : user.settings.soundEnabled,
@@ -293,7 +277,6 @@ exports.changePassword = async (req, res) => {
       });
     }
 
-    // Verify current password
     const isMatch = await bcrypt.compare(currentPassword, user.password);
     if (!isMatch) {
       return res.status(401).json({
@@ -302,7 +285,6 @@ exports.changePassword = async (req, res) => {
       });
     }
 
-    // Hash new password
     const salt = await bcrypt.genSalt(10);
     user.password = await bcrypt.hash(newPassword, salt);
     
