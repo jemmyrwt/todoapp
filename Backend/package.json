@@ -1,5 +1,5 @@
 {
-  "name": "zenith-x-pro",
+  "name": "taskcontroller",
   "version": "1.0.0",
   "description": "Premium Productivity App with MongoDB Atlas",
   "main": "server.js",
@@ -9,7 +9,7 @@
     "test": "echo \"No tests specified\" && exit 0",
     "render-build": "echo 'Build complete for Render'"
   },
-  "keywords": ["productivity", "todo", "focus-timer", "mern"],
+  "keywords": ["productivity", "todo", "focus-timer", "mern", "taskcontroller"],
   "author": "Jaimin Ravat",
   "license": "MIT",
   "dependencies": {
