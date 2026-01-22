@@ -1,8 +1,12 @@
-// TaskController - Production Ready
-const API_BASE_URL = 'https://todoapp-p5hq.onrender.com/api';
+// TaskController - Fixed Authentication for Render
+const API_BASE_URL = window.location.origin.includes('render.com') 
+    ? 'https://todoapp-p5hq.onrender.com/api' 
+    : 'http://localhost:10000/api';
 
 console.log('🌐 TaskController Loading...');
 console.log('📡 API Base URL:', API_BASE_URL);
+console.log('🌍 Current Origin:', window.location.origin);
+console.log('🔍 Environment:', process.env.NODE_ENV);
 
 let tasks = [];
 let notes = [];
@@ -22,7 +26,21 @@ let isOnline = navigator.onLine;
 let pendingDeleteTaskId = null;
 let pendingDeleteNoteId = null;
 
-// Audio elements - FIXED AUDIO ISSUES
+// Storage keys
+const STORAGE_KEYS = {
+    TOKEN: 'taskcontroller_token',
+    USER: 'taskcontroller_user',
+    SETTINGS: 'taskcontroller_settings',
+    THEME: 'taskcontroller_theme',
+    TASKS: 'taskcontroller_tasks',
+    NOTES: 'taskcontroller_notes',
+    FOCUS_SESSIONS: 'taskcontroller_focus_sessions',
+    FOCUS_TIME: 'taskcontroller_total_focus_time',
+    AUTO_LOGIN: 'taskcontroller_auto_login',
+    LAST_SYNC: 'taskcontroller_last_sync'
+};
+
+// Audio elements
 const taskSound = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-select-click-1109.mp3');
 const timerSound = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-alarm-digital-clock-beep-989.mp3');
 const notificationSound = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-correct-answer-tone-2870.mp3');
@@ -32,9 +50,9 @@ taskSound.load();
 timerSound.load();
 notificationSound.load();
 
-// 1. Initial Launch
+// 1. Initial Launch - FIXED AUTH LOAD
 window.onload = async () => {
-    console.log('🌐 TaskController Loading...');
+    console.log('🌐 TaskController Initializing...');
     
     // Check network status
     updateNetworkStatus();
@@ -42,14 +60,15 @@ window.onload = async () => {
     window.addEventListener('offline', updateNetworkStatus);
     
     // Load saved data
-    authToken = localStorage.getItem('taskcontroller_token');
-    currentUser = JSON.parse(localStorage.getItem('taskcontroller_user'));
+    authToken = localStorage.getItem(STORAGE_KEYS.TOKEN);
+    currentUser = JSON.parse(localStorage.getItem(STORAGE_KEYS.USER));
     
-    console.log('🔍 Stored token:', authToken ? 'Present' : 'Missing');
-    console.log('🔍 Stored user:', currentUser ? currentUser.email : 'None');
+    console.log('🔍 Auth check on load:');
+    console.log('   - Token:', authToken ? `Present (${authToken.substring(0, 20)}...)` : 'Missing');
+    console.log('   - User:', currentUser ? `${currentUser.email}` : 'None');
     
     // Load theme
-    const savedTheme = localStorage.getItem('taskcontroller_theme') || 'dark';
+    const savedTheme = localStorage.getItem(STORAGE_KEYS.THEME) || 'dark';
     document.body.setAttribute('data-theme', savedTheme);
     
     // Update theme toggle
@@ -59,7 +78,7 @@ window.onload = async () => {
     }
     
     // Load settings
-    const savedSettings = JSON.parse(localStorage.getItem('taskcontroller_settings'));
+    const savedSettings = JSON.parse(localStorage.getItem(STORAGE_KEYS.SETTINGS));
     if (savedSettings) {
         soundEnabled = savedSettings.soundEnabled !== undefined ? savedSettings.soundEnabled : true;
         autosaveEnabled = savedSettings.autosaveEnabled !== undefined ? savedSettings.autosaveEnabled : true;
@@ -77,65 +96,103 @@ window.onload = async () => {
         }
     }
     
+    // ✅ FIXED: Check authentication with better error handling
     if (authToken && currentUser) {
         try {
-            if (isOnline) {
-                // Verify token with backend
-                console.log('🔐 Verifying token with server...');
-                const response = await fetch(`${API_BASE_URL}/auth/me`, {
-                    headers: {
-                        'Authorization': `Bearer ${authToken}`,
-                        'Content-Type': 'application/json'
-                    }
-                });
-                
-                console.log('✅ Auth check response:', response.status);
-                
-                if (response.ok) {
-                    const data = await response.json();
-                    currentUser = data.user;
-                    localStorage.setItem('taskcontroller_user', JSON.stringify(currentUser));
-                    
-                    // Load data from server
-                    await loadUserData();
-                    showApp();
-                    showToast('Welcome back!', 'success');
-                } else {
-                    // Token invalid, use local data
-                    console.log('⚠️ Token invalid, using local data');
-                    loadLocalData();
-                    showToast('Session expired, please login again', 'warning');
-                    // Clear invalid token
-                    localStorage.removeItem('taskcontroller_token');
-                    showAuth();
-                }
-            } else {
-                // Offline mode
+            console.log('🔐 Attempting to verify existing token...');
+            
+            // First check if server is reachable
+            const healthCheck = await fetch(`${API_BASE_URL}/health`, {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json'
+                },
+                signal: AbortSignal.timeout(5000)
+            }).catch(() => null);
+            
+            if (!healthCheck || !healthCheck.ok) {
+                console.log('⚠️ Server not reachable, using offline mode');
                 loadLocalData();
                 showToast('Offline mode - using local data', 'info');
+                showApp();
+                return;
+            }
+            
+            // Verify token with backend
+            console.log('🔐 Verifying token with server...');
+            const response = await fetch(`${API_BASE_URL}/auth/me`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${authToken}`,
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                signal: AbortSignal.timeout(10000)
+            });
+            
+            console.log('✅ Auth check response:', response.status, response.statusText);
+            
+            if (response.ok) {
+                const data = await response.json();
+                console.log('✅ Token valid, user data:', data.user.email);
+                
+                currentUser = data.user;
+                localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(currentUser));
+                
+                // Load data from server
+                await loadUserData();
+                showApp();
+                showToast(`Welcome back, ${currentUser.name}!`, 'success');
+            } else {
+                // Token invalid
+                const errorData = await response.json().catch(() => ({}));
+                console.error('❌ Token invalid:', response.status, errorData);
+                
+                // Clear invalid token
+                localStorage.removeItem(STORAGE_KEYS.TOKEN);
+                localStorage.removeItem(STORAGE_KEYS.USER);
+                authToken = null;
+                currentUser = null;
+                
+                // Show auth screen
+                showAuth();
+                showToast('Session expired, please login again', 'warning');
             }
         } catch (error) {
-            console.error('Initial load error:', error);
-            loadLocalData();
-            showToast('Connected to local data', 'info');
+            console.error('❌ Auth verification error:', error);
+            
+            if (error.name === 'AbortError') {
+                console.log('⚠️ Auth check timeout, using local data');
+                loadLocalData();
+                showToast('Server timeout, using local data', 'warning');
+                showApp();
+            } else {
+                // Network or other error
+                console.log('⚠️ Network error, using offline mode');
+                loadLocalData();
+                showToast('Offline mode - using local data', 'info');
+                showApp();
+            }
         }
     } else {
+        // No token found, show auth screen
+        console.log('🔐 No existing token found, showing auth screen');
         showAuth();
     }
     
     // Initialize clock and intervals
     updateClock();
     setInterval(updateClock, 1000);
-    setInterval(syncDataIfOnline, 30000); // Sync every 30 seconds if online
+    setInterval(syncDataIfOnline, 30000);
     if (autosaveEnabled) {
-        setInterval(autoSaveNotes, 60000); // Auto-save notes every minute
+        setInterval(autoSaveNotes, 60000);
     }
     
     // Setup event listeners
     setupEventListeners();
     setupKeyboardShortcuts();
     
-    // Check health
+    // Check server health
     checkServerHealth();
     
     // Initialize audio
@@ -149,9 +206,10 @@ function initAudio() {
     notificationSound.volume = 0.5;
 }
 
-// 2. Authentication Functions
+// 2. Authentication Functions - COMPLETELY FIXED
 async function handleAuth() {
     console.log('🔑 handleAuth() called');
+    console.log('📡 API Base URL:', API_BASE_URL);
     
     const email = document.getElementById('auth-email').value.trim();
     const pass = document.getElementById('auth-pass').value.trim();
@@ -196,48 +254,75 @@ async function handleAuth() {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Accept': 'application/json'
+                'Accept': 'application/json',
+                'Origin': window.location.origin
             },
-            body: JSON.stringify(body)
+            body: JSON.stringify(body),
+            credentials: 'include'
         });
 
+        console.log('📥 Auth response status:', response.status, response.statusText);
+        
         const data = await response.json();
-        console.log('📥 Auth response:', response.status, data);
+        console.log('📥 Auth response data:', data);
 
         if (!response.ok) {
             throw new Error(data.message || `Authentication failed (${response.status})`);
         }
 
         if (!isLoginMode) {
-            // Registration successful - auto-login
-            console.log('✅ Registration successful, auto-logging in...');
+            // Registration successful
+            console.log('✅ Registration successful for:', email);
             
             // Save registration details for auto-login
-            localStorage.setItem('taskcontroller_auto_login', JSON.stringify({ email, password: pass }));
+            localStorage.setItem(STORAGE_KEYS.AUTO_LOGIN, JSON.stringify({ email, password: pass }));
             
-            // Auto-fill and login
+            // Show success message and switch to login
+            showToast('Account created successfully! Please login.', 'success');
+            
+            // Switch to login mode
+            isLoginMode = true;
+            updateAuthUI();
+            
+            // Auto-fill login form
             setTimeout(() => {
                 document.getElementById('auth-email').value = email;
                 document.getElementById('auth-pass').value = pass;
-                isLoginMode = true;
-                updateAuthUI();
-                setTimeout(() => {
-                    handleAuth();
-                }, 500);
-            }, 1000);
+                document.getElementById('auth-pass').focus();
+            }, 500);
             
             return;
         }
 
-        // Login successful
+        // ✅ FIXED: Login successful - proper token handling
+        if (!data.token) {
+            throw new Error('No authentication token received from server');
+        }
+        
+        if (!data.user) {
+            throw new Error('No user data received from server');
+        }
+        
         authToken = data.token;
         currentUser = data.user;
         
-        localStorage.setItem('taskcontroller_token', authToken);
-        localStorage.setItem('taskcontroller_user', JSON.stringify(currentUser));
-        localStorage.removeItem('taskcontroller_auto_login'); // Clear auto-login data
+        console.log('✅ Login successful:');
+        console.log('   - User:', currentUser.email);
+        console.log('   - Token received:', authToken.substring(0, 20) + '...');
+        console.log('   - User data:', currentUser);
         
-        console.log('✅ Login successful, user:', currentUser.email);
+        // Save to localStorage
+        localStorage.setItem(STORAGE_KEYS.TOKEN, authToken);
+        localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(currentUser));
+        localStorage.removeItem(STORAGE_KEYS.AUTO_LOGIN); // Clear auto-login data
+        
+        // Verify token was saved
+        const savedToken = localStorage.getItem(STORAGE_KEYS.TOKEN);
+        const savedUser = JSON.parse(localStorage.getItem(STORAGE_KEYS.USER));
+        
+        console.log('💾 Storage verification:');
+        console.log('   - Token saved:', savedToken ? 'Yes' : 'No');
+        console.log('   - User saved:', savedUser ? savedUser.email : 'No');
         
         // Update settings from server
         if (data.user.settings) {
@@ -257,17 +342,18 @@ async function handleAuth() {
             }
             
             // Save settings locally
-            localStorage.setItem('taskcontroller_settings', JSON.stringify(data.user.settings));
+            localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(data.user.settings));
         }
         
         // Load data from server
         await loadUserData();
         
-        showToast(data.message || 'Success!', 'success');
+        showToast(data.message || 'Login successful!', 'success');
         showApp();
         
     } catch (error) {
         console.error('❌ Auth error:', error);
+        console.error('❌ Error stack:', error.stack);
         
         if (!isOnline) {
             showToast('You are offline. Please check your internet connection.', 'error');
@@ -294,6 +380,16 @@ function updateAuthUI() {
         authMainBtn.textContent = 'Access Workspace';
         toggleTextSpan.textContent = 'Create Account';
         if (authExtra) authExtra.style.display = 'none';
+        
+        // Check for auto-login data
+        const autoLogin = JSON.parse(localStorage.getItem(STORAGE_KEYS.AUTO_LOGIN));
+        if (autoLogin) {
+            setTimeout(() => {
+                document.getElementById('auth-email').value = autoLogin.email;
+                document.getElementById('auth-pass').value = autoLogin.password;
+                showToast('Auto-filled credentials from registration', 'info');
+            }, 100);
+        }
     } else {
         authTitle.textContent = 'Create Account';
         authDesc.textContent = 'Join TaskController today';
@@ -317,8 +413,12 @@ function toggleAuthMode() {
     document.getElementById('auth-email').value = '';
     document.getElementById('auth-pass').value = '';
     
-    // Focus on email field
-    document.getElementById('auth-email').focus();
+    // Focus on appropriate field
+    if (isLoginMode) {
+        document.getElementById('auth-email').focus();
+    } else {
+        document.getElementById('auth-name').focus();
+    }
 }
 
 // 5. Network Status Function
@@ -327,7 +427,6 @@ function updateNetworkStatus() {
     
     const networkIndicator = document.getElementById('network-status');
     if (!networkIndicator) {
-        // Create network indicator
         const indicator = document.createElement('div');
         indicator.id = 'network-status';
         document.body.appendChild(indicator);
@@ -357,7 +456,7 @@ function updateNetworkStatus() {
 
 // 6. Setup Event Listeners Function
 function setupEventListeners() {
-    // Add task button - FIXED: No more vertical stretching
+    // Add task button
     document.getElementById('addBtn').addEventListener('click', addTask);
     
     // Task input enter key
@@ -395,14 +494,14 @@ function setupEventListeners() {
     }
     
     if (timerPauseBtn) {
-        timerPauseBtn.addEventListener('click', startTimer); // Same function for pause/resume
+        timerPauseBtn.addEventListener('click', startTimer);
     }
     
     if (timerResetBtn) {
         timerResetBtn.addEventListener('click', resetTimer);
     }
     
-    // Timer presets - FIXED: Proper event handling
+    // Timer presets
     const timerPresets = document.getElementById('timer-presets');
     if (timerPresets) {
         timerPresets.addEventListener('change', function() {
@@ -493,6 +592,28 @@ function setupEventListeners() {
             }
         });
     });
+    
+    // Auth form submit on Enter
+    document.getElementById('auth-email').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            handleAuth();
+        }
+    });
+    
+    document.getElementById('auth-pass').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            handleAuth();
+        }
+    });
+    
+    const authName = document.getElementById('auth-name');
+    if (authName) {
+        authName.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                handleAuth();
+            }
+        });
+    }
 }
 
 // 7. Save Settings Function
@@ -504,7 +625,7 @@ async function saveSettings() {
         remindersEnabled
     };
     
-    localStorage.setItem('taskcontroller_settings', JSON.stringify(settings));
+    localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(settings));
     
     // Sync with server if authenticated
     if (authToken && currentUser) {
@@ -513,7 +634,8 @@ async function saveSettings() {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${authToken}`
+                    'Authorization': `Bearer ${authToken}`,
+                    'Accept': 'application/json'
                 },
                 body: JSON.stringify(settings)
             });
@@ -525,10 +647,10 @@ async function saveSettings() {
 
 // 8. Load Local Data Function
 function loadLocalData() {
-    tasks = JSON.parse(localStorage.getItem('taskcontroller_tasks')) || [];
-    notes = JSON.parse(localStorage.getItem('taskcontroller_notes')) || [];
-    focusSessions = parseInt(localStorage.getItem('taskcontroller_focus_sessions')) || 0;
-    totalFocusTime = parseInt(localStorage.getItem('taskcontroller_total_focus_time')) || 0;
+    tasks = JSON.parse(localStorage.getItem(STORAGE_KEYS.TASKS)) || [];
+    notes = JSON.parse(localStorage.getItem(STORAGE_KEYS.NOTES)) || [];
+    focusSessions = parseInt(localStorage.getItem(STORAGE_KEYS.FOCUS_SESSIONS)) || 0;
+    totalFocusTime = parseInt(localStorage.getItem(STORAGE_KEYS.FOCUS_TIME)) || 0;
     
     showApp();
 }
@@ -563,14 +685,17 @@ function showApp() {
         dateInput.min = today;
     }
     
-    // Show logout buttons (they were hidden)
+    // Show logout buttons
     const logoutBtns = document.querySelectorAll('.logout-btn, .switch-account-btn');
     logoutBtns.forEach(btn => {
         if (btn) btn.style.display = 'flex';
     });
+    
+    console.log('✅ App shown successfully');
+    console.log('👤 Current user:', currentUser ? currentUser.email : 'None');
 }
 
-// 10. Show Auth Function
+// 10. Show Auth Function - FIXED
 function showAuth() {
     const authScreen = document.getElementById('auth-screen');
     const appContent = document.getElementById('app-content');
@@ -579,13 +704,17 @@ function showAuth() {
     if (appContent) appContent.style.display = 'none';
     
     // Check for auto-login data
-    const autoLogin = JSON.parse(localStorage.getItem('taskcontroller_auto_login'));
+    const autoLogin = JSON.parse(localStorage.getItem(STORAGE_KEYS.AUTO_LOGIN));
     if (autoLogin) {
+        console.log('🔍 Auto-login data found for:', autoLogin.email);
         document.getElementById('auth-email').value = autoLogin.email;
         document.getElementById('auth-pass').value = autoLogin.password;
         isLoginMode = true;
         updateAuthUI();
+        
+        // Auto-login after short delay
         setTimeout(() => {
+            console.log('🔄 Attempting auto-login...');
             document.getElementById('auth-main-btn').click();
         }, 500);
     } else {
@@ -595,11 +724,9 @@ function showAuth() {
         
         // Focus on email field
         const emailInput = document.getElementById('auth-email');
-        if (emailInput) emailInput.focus();
-        
-        // Clear inputs
-        if (document.getElementById('auth-email')) {
-            document.getElementById('auth-email').value = '';
+        if (emailInput) {
+            emailInput.focus();
+            emailInput.value = '';
         }
         if (document.getElementById('auth-pass')) {
             document.getElementById('auth-pass').value = '';
@@ -608,60 +735,77 @@ function showAuth() {
             document.getElementById('auth-name').value = '';
         }
     }
+    
+    console.log('🔐 Auth screen shown');
 }
 
-// 11. Load User Data Function
+// 11. Load User Data Function - FIXED
 async function loadUserData() {
-    if (!authToken) return;
+    if (!authToken || !currentUser) {
+        console.log('❌ Cannot load user data: No token or user');
+        return;
+    }
+    
+    console.log('📥 Loading user data from server...');
     
     try {
-        console.log('📥 Loading user data from server...');
-        
         // Load tasks
         const tasksResponse = await fetch(`${API_BASE_URL}/todos`, {
             headers: {
                 'Authorization': `Bearer ${authToken}`,
-                'Content-Type': 'application/json'
-            }
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            signal: AbortSignal.timeout(15000)
         });
         
         if (tasksResponse.ok) {
             const tasksData = await tasksResponse.json();
             tasks = tasksData.todos || [];
-            localStorage.setItem('taskcontroller_tasks', JSON.stringify(tasks));
+            localStorage.setItem(STORAGE_KEYS.TASKS, JSON.stringify(tasks));
             console.log(`✅ Loaded ${tasks.length} tasks`);
+        } else {
+            console.error('❌ Failed to load tasks:', tasksResponse.status);
         }
         
         // Load notes
         const notesResponse = await fetch(`${API_BASE_URL}/notes`, {
             headers: {
                 'Authorization': `Bearer ${authToken}`,
-                'Content-Type': 'application/json'
-            }
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            signal: AbortSignal.timeout(15000)
         });
         
         if (notesResponse.ok) {
             const notesData = await notesResponse.json();
             notes = notesData.notes || [];
-            localStorage.setItem('taskcontroller_notes', JSON.stringify(notes));
+            localStorage.setItem(STORAGE_KEYS.NOTES, JSON.stringify(notes));
             console.log(`✅ Loaded ${notes.length} notes`);
+        } else {
+            console.error('❌ Failed to load notes:', notesResponse.status);
         }
         
         // Load focus stats
         const focusResponse = await fetch(`${API_BASE_URL}/focus/stats`, {
             headers: {
                 'Authorization': `Bearer ${authToken}`,
-                'Content-Type': 'application/json'
-            }
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            signal: AbortSignal.timeout(15000)
         });
         
         if (focusResponse.ok) {
             const focusData = await focusResponse.json();
             focusSessions = focusData.totalStats?.totalSessions || 0;
             totalFocusTime = focusData.totalStats?.totalDuration || 0;
-            localStorage.setItem('taskcontroller_focus_sessions', focusSessions);
-            localStorage.setItem('taskcontroller_total_focus_time', totalFocusTime);
+            localStorage.setItem(STORAGE_KEYS.FOCUS_SESSIONS, focusSessions);
+            localStorage.setItem(STORAGE_KEYS.FOCUS_TIME, totalFocusTime);
             console.log(`✅ Loaded ${focusSessions} focus sessions`);
+        } else {
+            console.error('❌ Failed to load focus stats:', focusResponse.status);
         }
         
         // Update UI
@@ -670,24 +814,31 @@ async function loadUserData() {
         updateAnalytics();
         updateFocusStats();
         
-        localStorage.setItem('taskcontroller_last_sync', new Date().toISOString());
+        localStorage.setItem(STORAGE_KEYS.LAST_SYNC, new Date().toISOString());
+        console.log('✅ User data loaded successfully');
         
     } catch (error) {
-        console.error('Load data error:', error);
+        console.error('❌ Load data error:', error);
+        
+        if (error.name === 'AbortError') {
+            showToast('Data load timeout, using local data', 'warning');
+        } else {
+            showToast('Failed to load data, using local cache', 'error');
+        }
+        
         // Fallback to localStorage
-        tasks = JSON.parse(localStorage.getItem('taskcontroller_tasks')) || [];
-        notes = JSON.parse(localStorage.getItem('taskcontroller_notes')) || [];
+        tasks = JSON.parse(localStorage.getItem(STORAGE_KEYS.TASKS)) || [];
+        notes = JSON.parse(localStorage.getItem(STORAGE_KEYS.NOTES)) || [];
         renderTasks();
         renderNotes();
     }
 }
 
-// 12. Sync Data Function (REMOVED REPETITIVE POPUP)
+// 12. Sync Data Function
 async function syncDataIfOnline() {
-    if (!isOnline || !authToken) return;
+    if (!isOnline || !authToken || !currentUser) return;
     
     try {
-        // No loading overlay for silent sync
         let syncedItems = 0;
         
         // Sync tasks
@@ -698,7 +849,8 @@ async function syncDataIfOnline() {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${authToken}`
+                            'Authorization': `Bearer ${authToken}`,
+                            'Accept': 'application/json'
                         },
                         body: JSON.stringify({
                             title: task.title,
@@ -708,12 +860,12 @@ async function syncDataIfOnline() {
                             dueDate: task.dueDate || null,
                             tags: task.tags || [],
                             isCompleted: task.isCompleted || false
-                        })
+                        }),
+                        signal: AbortSignal.timeout(10000)
                     });
 
                     if (response.ok) {
                         const data = await response.json();
-                        // Update task with server ID
                         const taskIndex = tasks.findIndex(t => t.id === task.id);
                         if (taskIndex !== -1) {
                             tasks[taskIndex] = { ...data.todo, id: task.id };
@@ -734,19 +886,20 @@ async function syncDataIfOnline() {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${authToken}`
+                            'Authorization': `Bearer ${authToken}`,
+                            'Accept': 'application/json'
                         },
                         body: JSON.stringify({
                             title: note.title || 'Untitled Note',
                             content: note.content,
                             category: note.category || 'Personal',
                             tags: note.tags || []
-                        })
+                        }),
+                        signal: AbortSignal.timeout(10000)
                     });
 
                     if (response.ok) {
                         const data = await response.json();
-                        // Update note with server ID
                         const noteIndex = notes.findIndex(n => n.id === note.id);
                         if (noteIndex !== -1) {
                             notes[noteIndex] = { ...data.note, id: note.id };
@@ -761,13 +914,9 @@ async function syncDataIfOnline() {
         
         // Save updated data
         if (syncedItems > 0) {
-            localStorage.setItem('taskcontroller_tasks', JSON.stringify(tasks));
-            localStorage.setItem('taskcontroller_notes', JSON.stringify(notes));
-            
-            // Update last sync time
-            localStorage.setItem('taskcontroller_last_sync', new Date().toISOString());
-            
-            // Silent sync - no popup
+            localStorage.setItem(STORAGE_KEYS.TASKS, JSON.stringify(tasks));
+            localStorage.setItem(STORAGE_KEYS.NOTES, JSON.stringify(notes));
+            localStorage.setItem(STORAGE_KEYS.LAST_SYNC, new Date().toISOString());
             console.log(`✅ Silent sync completed: ${syncedItems} items synced`);
         }
         
@@ -779,7 +928,9 @@ async function syncDataIfOnline() {
 // 13. Server Health Check
 async function checkServerHealth() {
     try {
-        const response = await fetch(`${API_BASE_URL}/health`);
+        const response = await fetch(`${API_BASE_URL}/health`, {
+            signal: AbortSignal.timeout(5000)
+        });
         if (response.ok) {
             console.log('✅ Server is healthy');
         } else {
@@ -790,7 +941,7 @@ async function checkServerHealth() {
     }
 }
 
-// 14. Task Management Functions - FIXED: Button alignment
+// 14. Task Management Functions
 async function addTask() {
     const titleInput = document.getElementById('taskTitle');
     if (!titleInput) return;
@@ -817,16 +968,16 @@ async function addTask() {
     // Create local task immediately
     const localTask = {
         id: Date.now(),
-        _id: `local_${Date.now()}`, // Temporary ID for offline
+        _id: `local_${Date.now()}`,
         ...taskData,
         isCompleted: false,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
-        isLocal: !isOnline // Mark as local if offline
+        isLocal: !isOnline
     };
 
     tasks.unshift(localTask);
-    localStorage.setItem('taskcontroller_tasks', JSON.stringify(tasks));
+    localStorage.setItem(STORAGE_KEYS.TASKS, JSON.stringify(tasks));
     
     // Clear input
     titleInput.value = '';
@@ -845,21 +996,21 @@ async function addTask() {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${authToken}`
+                    'Authorization': `Bearer ${authToken}`,
+                    'Accept': 'application/json'
                 },
-                body: JSON.stringify(taskData)
+                body: JSON.stringify(taskData),
+                signal: AbortSignal.timeout(10000)
             });
 
             if (response.ok) {
                 const data = await response.json();
-                // Replace local task with server task
                 const taskIndex = tasks.findIndex(t => t.id === localTask.id);
                 if (taskIndex !== -1) {
                     tasks[taskIndex] = { ...data.todo, id: localTask.id };
-                    localStorage.setItem('taskcontroller_tasks', JSON.stringify(tasks));
+                    localStorage.setItem(STORAGE_KEYS.TASKS, JSON.stringify(tasks));
                     renderTasks();
                 }
-                // Silent sync - no popup
             }
         } catch (error) {
             console.error('Sync task error:', error);
@@ -921,7 +1072,7 @@ function toggleTask(taskId) {
     if (task) {
         task.isCompleted = !task.isCompleted;
         task.completedAt = task.isCompleted ? new Date().toISOString() : null;
-        localStorage.setItem('taskcontroller_tasks', JSON.stringify(tasks));
+        localStorage.setItem(STORAGE_KEYS.TASKS, JSON.stringify(tasks));
         renderTasks();
         updateAnalytics();
         
@@ -936,7 +1087,8 @@ function toggleTask(taskId) {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${authToken}`
+                    'Authorization': `Bearer ${authToken}`,
+                    'Accept': 'application/json'
                 },
                 body: JSON.stringify({
                     isCompleted: task.isCompleted
@@ -946,7 +1098,7 @@ function toggleTask(taskId) {
     }
 }
 
-// 17. Show Delete Modal - FIXED: Proper modal closing
+// 17. Show Delete Modal
 function showDeleteModal(taskId) {
     pendingDeleteTaskId = taskId;
     const modal = document.getElementById('delete-modal');
@@ -964,7 +1116,7 @@ function closeDeleteModal() {
     }
 }
 
-// 19. Confirm Delete - FIXED: Modal closes properly
+// 19. Confirm Delete
 function confirmDelete() {
     if (pendingDeleteTaskId) {
         deleteTask(pendingDeleteTaskId);
@@ -982,14 +1134,15 @@ function deleteTask(taskId) {
     
     // Remove from local array
     tasks = tasks.filter(t => t.id !== taskId);
-    localStorage.setItem('taskcontroller_tasks', JSON.stringify(tasks));
+    localStorage.setItem(STORAGE_KEYS.TASKS, JSON.stringify(tasks));
     
     // Delete from server if online
     if (isOnline && authToken && task._id && !task._id.startsWith('local_')) {
         fetch(`${API_BASE_URL}/todos/${task._id}`, {
             method: 'DELETE',
             headers: {
-                'Authorization': `Bearer ${authToken}`
+                'Authorization': `Bearer ${authToken}`,
+                'Accept': 'application/json'
             }
         }).catch(console.error);
     }
@@ -1017,7 +1170,7 @@ function editTask(taskId) {
         
         // Remove task from list
         tasks = tasks.filter(t => t.id !== taskId);
-        localStorage.setItem('taskcontroller_tasks', JSON.stringify(tasks));
+        localStorage.setItem(STORAGE_KEYS.TASKS, JSON.stringify(tasks));
         renderTasks();
         
         // Play sound
@@ -1077,7 +1230,7 @@ function updateAnalytics() {
     updateTaskProgress();
 }
 
-// 24. Notes Functions - FIXED: Responsive issues
+// 24. Notes Functions
 async function saveNote() {
     const noteContent = document.getElementById('noteContent');
     if (!noteContent) return;
@@ -1104,7 +1257,7 @@ async function saveNote() {
     };
     
     notes.unshift(note);
-    localStorage.setItem('taskcontroller_notes', JSON.stringify(notes));
+    localStorage.setItem(STORAGE_KEYS.NOTES, JSON.stringify(notes));
     
     // Clear textarea
     noteContent.value = '';
@@ -1120,26 +1273,26 @@ async function saveNote() {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${authToken}`
+                    'Authorization': `Bearer ${authToken}`,
+                    'Accept': 'application/json'
                 },
                 body: JSON.stringify({
                     title: 'Untitled Note',
                     content: content,
                     category: 'Personal',
                     tags: []
-                })
+                }),
+                signal: AbortSignal.timeout(10000)
             });
 
             if (response.ok) {
                 const data = await response.json();
-                // Update note with server ID
                 const noteIndex = notes.findIndex(n => n.id === note.id);
                 if (noteIndex !== -1) {
                     notes[noteIndex] = { ...data.note, id: note.id };
-                    localStorage.setItem('taskcontroller_notes', JSON.stringify(notes));
+                    localStorage.setItem(STORAGE_KEYS.NOTES, JSON.stringify(notes));
                     renderNotes();
                 }
-                // Silent sync - no popup
             }
         } catch (error) {
             console.error('Sync note error:', error);
@@ -1193,7 +1346,7 @@ function editNote(noteId) {
         
         // Remove note from list
         notes = notes.filter(n => n.id !== noteId);
-        localStorage.setItem('taskcontroller_notes', JSON.stringify(notes));
+        localStorage.setItem(STORAGE_KEYS.NOTES, JSON.stringify(notes));
         renderNotes();
         
         // Play sound
@@ -1224,14 +1377,15 @@ function deleteNote(noteId) {
     
     // Remove from local array
     notes = notes.filter(n => n.id !== noteId);
-    localStorage.setItem('taskcontroller_notes', JSON.stringify(notes));
+    localStorage.setItem(STORAGE_KEYS.NOTES, JSON.stringify(notes));
     
     // Delete from server if online
     if (isOnline && authToken && note._id && !note._id.startsWith('local_')) {
         fetch(`${API_BASE_URL}/notes/${note._id}`, {
             method: 'DELETE',
             headers: {
-                'Authorization': `Bearer ${authToken}`
+                'Authorization': `Bearer ${authToken}`,
+                'Accept': 'application/json'
             }
         }).catch(console.error);
     }
@@ -1251,7 +1405,7 @@ function autoSaveNotes() {
     saveNote();
 }
 
-// 26. Timer Functions - FIXED: Timer UI issues
+// 26. Timer Functions
 function startTimer() {
     if (timerRunning) {
         // Pause timer
@@ -1308,8 +1462,8 @@ function startTimer() {
                 const presetSelect = document.getElementById('timer-presets');
                 const presetValue = presetSelect ? parseInt(presetSelect.value) : 1500;
                 totalFocusTime += presetValue;
-                localStorage.setItem('taskcontroller_focus_sessions', focusSessions);
-                localStorage.setItem('taskcontroller_total_focus_time', totalFocusTime);
+                localStorage.setItem(STORAGE_KEYS.FOCUS_SESSIONS, focusSessions);
+                localStorage.setItem(STORAGE_KEYS.FOCUS_TIME, totalFocusTime);
                 updateFocusStats();
                 
                 // Save to server if online
@@ -1318,7 +1472,8 @@ function startTimer() {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${authToken}`
+                            'Authorization': `Bearer ${authToken}`,
+                            'Accept': 'application/json'
                         },
                         body: JSON.stringify({
                             duration: presetValue,
@@ -1483,7 +1638,7 @@ function hideToast() {
     }
 }
 
-// 28. Toggle Theme - FIXED: Theme switching
+// 28. Toggle Theme
 function toggleTheme() {
     const currentTheme = document.body.getAttribute('data-theme');
     const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
@@ -1496,12 +1651,12 @@ function toggleTheme() {
     }
     
     // Save to localStorage
-    localStorage.setItem('taskcontroller_theme', newTheme);
+    localStorage.setItem(STORAGE_KEYS.THEME, newTheme);
     
     // Save to settings
-    const settings = JSON.parse(localStorage.getItem('taskcontroller_settings')) || {};
+    const settings = JSON.parse(localStorage.getItem(STORAGE_KEYS.SETTINGS)) || {};
     settings.theme = newTheme;
-    localStorage.setItem('taskcontroller_settings', JSON.stringify(settings));
+    localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(settings));
     
     // Sync with server if online
     if (isOnline && authToken) {
@@ -1509,7 +1664,8 @@ function toggleTheme() {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${authToken}`
+                'Authorization': `Bearer ${authToken}`,
+                'Accept': 'application/json'
             },
             body: JSON.stringify({ theme: newTheme })
         }).catch(console.error);
@@ -1587,7 +1743,7 @@ function getPriorityColor(priority) {
     return colors[priority] || '#6b7280';
 }
 
-// 30. Play Sound Function - FIXED: Audio issues
+// 30. Play Sound Function
 function playSound(type) {
     if (!soundEnabled) return;
     
@@ -1609,14 +1765,14 @@ function playSound(type) {
         
         sound.currentTime = 0;
         sound.play().catch(error => {
-            console.log('Audio play failed (user might not have interacted yet):', error);
+            console.log('Audio play failed:', error);
         });
     } catch (error) {
         console.error('Audio error:', error);
     }
 }
 
-// 31. Logout Functions
+// 31. Logout Functions - FIXED
 function showLogoutModal() {
     const modal = document.getElementById('logout-modal');
     if (modal) {
@@ -1632,6 +1788,8 @@ function closeLogoutModal() {
 }
 
 async function logout() {
+    console.log('👋 Logging out...');
+    
     // Stop timer if running
     if (timer) {
         clearInterval(timer);
@@ -1641,21 +1799,23 @@ async function logout() {
     // Save any unsynced data
     await syncDataIfOnline();
     
-    // Clear all data
-    localStorage.removeItem('taskcontroller_token');
-    localStorage.removeItem('taskcontroller_user');
-    localStorage.removeItem('taskcontroller_auto_login');
+    // Clear authentication data only
+    localStorage.removeItem(STORAGE_KEYS.TOKEN);
+    localStorage.removeItem(STORAGE_KEYS.USER);
+    localStorage.removeItem(STORAGE_KEYS.AUTO_LOGIN);
     
+    // Clear variables
     authToken = null;
     currentUser = null;
     
     // Close modal
     closeLogoutModal();
     
-    // Reset UI
+    // Reset UI and show auth screen
     showAuth();
     
     showToast('Logged out successfully', 'success');
+    console.log('✅ Logout completed');
 }
 
 // 32. Switch Account Function
@@ -1792,5 +1952,5 @@ window.hideLoading = hideLoading;
 window.hideToast = hideToast;
 window.switchView = switchView;
 
-console.log('✅ All functions are now globally available');
-console.log('🚀 TaskController Script Loaded Successfully');
+console.log('✅ All authentication functions loaded');
+console.log('🚀 TaskController Authentication System Ready');
