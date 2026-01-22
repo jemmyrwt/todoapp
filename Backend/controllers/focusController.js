@@ -1,3 +1,5 @@
+// FIXED VERSION WITH OPTIMIZATIONS:
+
 const FocusSession = require('../models/FocusSession');
 const Todo = require('../models/Todo');
 
@@ -6,12 +8,15 @@ const Todo = require('../models/Todo');
 // @access  Private
 exports.startSession = async (req, res) => {
   try {
-    const { 
-      duration, 
-      mode, 
-      taskId, 
-      notes 
-    } = req.body;
+    const { duration, mode, taskId, notes } = req.body;
+
+    // Validate duration
+    if (!duration || typeof duration !== 'number' || duration <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide a valid duration'
+      });
+    }
 
     const startTime = new Date();
     const endTime = new Date(startTime.getTime() + (duration * 1000));
@@ -28,9 +33,11 @@ exports.startSession = async (req, res) => {
 
     // If task is associated, update its actual time
     if (taskId) {
-      await Todo.findByIdAndUpdate(taskId, {
-        $inc: { actualTime: Math.floor(duration / 60) } // Convert seconds to minutes
-      });
+      await Todo.findByIdAndUpdate(
+        taskId,
+        { $inc: { actualTime: Math.floor(duration / 60) } },
+        { new: true }
+      );
     }
 
     res.status(201).json({
@@ -43,7 +50,8 @@ exports.startSession = async (req, res) => {
     console.error('Start session error:', error);
     res.status(500).json({
       success: false,
-      message: 'Server error'
+      message: 'Server error',
+      error: error.message
     });
   }
 };
@@ -55,6 +63,14 @@ exports.endSession = async (req, res) => {
   try {
     const { id } = req.params;
     const { interruptions, notes } = req.body;
+
+    // Validate session ID
+    if (!id) {
+      return res.status(400).json({
+        success: false,
+        message: 'Session ID is required'
+      });
+    }
 
     const session = await FocusSession.findOne({
       _id: id,
@@ -71,6 +87,7 @@ exports.endSession = async (req, res) => {
     // Calculate actual duration
     const actualDuration = Math.floor((new Date() - session.startTime) / 1000);
     
+    // Update session
     session.endTime = new Date();
     session.duration = actualDuration;
     session.interruptions = interruptions || 0;
@@ -125,13 +142,13 @@ exports.getSessions = async (req, res) => {
     }
 
     // Execute query with pagination
-    const skip = (page - 1) * limit;
+    const skip = (parseInt(page) - 1) * parseInt(limit);
     
     const sessions = await FocusSession.find(query)
       .sort(sort)
       .skip(skip)
       .limit(parseInt(limit))
-      .populate('taskId', 'title priority');
+      .populate('taskId', 'title priority category');
 
     const total = await FocusSession.countDocuments(query);
 
@@ -176,14 +193,23 @@ exports.getFocusStats = async (req, res) => {
           _id: null,
           totalSessions: { $sum: 1 },
           totalDuration: { $sum: "$duration" },
-          totalInterruptions: { $sum: "$interruptions" }
+          totalInterruptions: { $sum: "$interruptions" },
+          avgDuration: { $avg: "$duration" }
         }
       }
     ]);
 
-    // Daily focus time
+    // Daily focus time (last 7 days)
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    
     const dailyStats = await FocusSession.aggregate([
-      { $match: matchQuery },
+      { 
+        $match: { 
+          userId: req.userId,
+          startTime: { $gte: sevenDaysAgo }
+        } 
+      },
       {
         $group: {
           _id: {
@@ -193,8 +219,7 @@ exports.getFocusStats = async (req, res) => {
           duration: { $sum: "$duration" }
         }
       },
-      { $sort: { _id: 1 } },
-      { $limit: 30 }
+      { $sort: { _id: 1 } }
     ]);
 
     // Mode distribution
@@ -235,7 +260,12 @@ exports.getFocusStats = async (req, res) => {
 
     res.json({
       success: true,
-      totalStats: totalStats[0] || { totalSessions: 0, totalDuration: 0, totalInterruptions: 0 },
+      totalStats: totalStats[0] || { 
+        totalSessions: 0, 
+        totalDuration: 0, 
+        totalInterruptions: 0,
+        avgDuration: 0
+      },
       dailyStats,
       modeStats,
       weeklyStats: formattedWeeklyStats,
@@ -253,31 +283,36 @@ exports.getFocusStats = async (req, res) => {
 
 // Helper function to calculate streak
 async function calculateStreak(userId) {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  
-  let streak = 0;
-  let currentDate = new Date(today);
-  
-  while (streak < 365) { // Max streak check
-    const startOfDay = new Date(currentDate);
-    const endOfDay = new Date(currentDate);
-    endOfDay.setHours(23, 59, 59, 999);
+  try {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
     
-    const hasSession = await FocusSession.findOne({
-      userId,
-      startTime: { $gte: startOfDay, $lte: endOfDay }
-    });
+    let streak = 0;
+    let currentDate = new Date(today);
     
-    if (hasSession) {
-      streak++;
-      currentDate.setDate(currentDate.getDate() - 1);
-    } else {
-      break;
+    while (streak < 365) {
+      const startOfDay = new Date(currentDate);
+      const endOfDay = new Date(currentDate);
+      endOfDay.setHours(23, 59, 59, 999);
+      
+      const hasSession = await FocusSession.findOne({
+        userId,
+        startTime: { $gte: startOfDay, $lte: endOfDay }
+      });
+      
+      if (hasSession) {
+        streak++;
+        currentDate.setDate(currentDate.getDate() - 1);
+      } else {
+        break;
+      }
     }
+    
+    return streak;
+  } catch (error) {
+    console.error('Calculate streak error:', error);
+    return 0;
   }
-  
-  return streak;
 }
 
 // @desc    Get leaderboard
@@ -285,9 +320,6 @@ async function calculateStreak(userId) {
 // @access  Private
 exports.getLeaderboard = async (req, res) => {
   try {
-    // For now, return user's own stats
-    // In a real app, you'd aggregate across all users
-    
     const userStats = await FocusSession.aggregate([
       { $match: { userId: req.userId } },
       {
@@ -295,18 +327,39 @@ exports.getLeaderboard = async (req, res) => {
           _id: null,
           totalSessions: { $sum: 1 },
           totalDuration: { $sum: "$duration" },
-          averageDuration: { $avg: "$duration" }
+          averageDuration: { $avg: "$duration" },
+          totalDays: {
+            $addToSet: {
+              $dateToString: { format: "%Y-%m-%d", date: "$startTime" }
+            }
+          }
+        }
+      },
+      {
+        $project: {
+          totalSessions: 1,
+          totalDuration: 1,
+          averageDuration: 1,
+          totalDaysCount: { $size: "$totalDays" }
         }
       }
     ]);
+
+    const stats = userStats[0] || { 
+      totalSessions: 0, 
+      totalDuration: 0, 
+      averageDuration: 0,
+      totalDaysCount: 0
+    };
 
     res.json({
       success: true,
       leaderboard: [{
         userId: req.userId,
-        totalSessions: userStats[0]?.totalSessions || 0,
-        totalDuration: userStats[0]?.totalDuration || 0,
-        averageDuration: userStats[0]?.averageDuration || 0,
+        totalSessions: stats.totalSessions,
+        totalDuration: stats.totalDuration,
+        averageDuration: Math.round(stats.averageDuration || 0),
+        totalDays: stats.totalDaysCount,
         rank: 1
       }]
     });
