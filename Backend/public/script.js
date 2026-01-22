@@ -96,6 +96,9 @@ window.onload = async () => {
         }
     }
     
+    // ✅ FIXED: Setup event listeners FIRST
+    setupEventListeners();
+    
     // ✅ FIXED: Check authentication with better error handling
     if (authToken && currentUser) {
         try {
@@ -188,8 +191,6 @@ window.onload = async () => {
         setInterval(autoSaveNotes, 60000);
     }
     
-    // Setup event listeners
-    setupEventListeners();
     setupKeyboardShortcuts();
     
     // Check server health
@@ -467,8 +468,64 @@ function updateNetworkStatus() {
     }
 }
 
-// 6. Setup Event Listeners Function
+// 6. Setup Event Listeners Function - FIXED
 function setupEventListeners() {
+    console.log('🔧 Setting up event listeners...');
+    
+    // ✅ FIXED: AUTH BUTTON EVENT LISTENER - PROPER BINDING
+    const authBtn = document.getElementById('auth-main-btn');
+    if (authBtn) {
+        console.log('✅ Auth button found, adding event listener');
+        // Remove any existing listeners
+        authBtn.replaceWith(authBtn.cloneNode(true));
+        const newAuthBtn = document.getElementById('auth-main-btn');
+        newAuthBtn.addEventListener('click', handleAuth);
+    } else {
+        console.log('❌ Auth button not found!');
+    }
+    
+    // ✅ FIXED: AUTH TOGGLE LINK
+    const toggleAuthLink = document.querySelector('.toggle-auth');
+    if (toggleAuthLink) {
+        console.log('✅ Toggle auth link found');
+        toggleAuthLink.addEventListener('click', function(e) {
+            e.preventDefault();
+            toggleAuthMode();
+        });
+    }
+    
+    // ✅ FIXED: AUTH FORM ENTER KEY
+    const authEmail = document.getElementById('auth-email');
+    const authPass = document.getElementById('auth-pass');
+    const authName = document.getElementById('auth-name');
+    
+    if (authEmail) {
+        authEmail.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                handleAuth();
+            }
+        });
+    }
+    
+    if (authPass) {
+        authPass.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                handleAuth();
+            }
+        });
+    }
+    
+    if (authName) {
+        authName.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                handleAuth();
+            }
+        });
+    }
+    
     // Add task button
     document.getElementById('addBtn').addEventListener('click', addTask);
     
@@ -478,46 +535,6 @@ function setupEventListeners() {
             addTask();
         }
     });
-    
-    // ✅ FIXED: AUTH BUTTON EVENT LISTENER
-    const authBtn = document.getElementById('auth-main-btn');
-    if (authBtn) {
-        console.log('✅ Auth button found, adding event listener');
-        authBtn.addEventListener('click', handleAuth);
-    } else {
-        console.log('❌ Auth button not found!');
-    }
-    
-    // ✅ FIXED: AUTH FORM ENTER KEY
-    document.getElementById('auth-email').addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') {
-            handleAuth();
-        }
-    });
-    
-    document.getElementById('auth-pass').addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') {
-            handleAuth();
-        }
-    });
-    
-    const authName = document.getElementById('auth-name');
-    if (authName) {
-        authName.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                handleAuth();
-            }
-        });
-    }
-    
-    // ✅ FIXED: AUTH TOGGLE LINK
-    const toggleAuthLink = document.querySelector('.toggle-auth');
-    if (toggleAuthLink) {
-        console.log('✅ Toggle auth link found');
-        toggleAuthLink.addEventListener('click', toggleAuthMode);
-    } else {
-        console.log('❌ Toggle auth link not found!');
-    }
     
     // Task filters
     document.querySelectorAll('.filter-btn').forEach(btn => {
@@ -547,7 +564,7 @@ function setupEventListeners() {
     }
     
     if (timerPauseBtn) {
-        timerPauseBtn.addEventListener('click', startTimer);
+        timerPauseBtn.addEventListener('click', pauseTimer);
     }
     
     if (timerResetBtn) {
@@ -639,6 +656,24 @@ function setupEventListeners() {
             }
         });
     });
+    
+    console.log('✅ Event listeners setup complete');
+}
+
+// Add missing pauseTimer function
+function pauseTimer() {
+    if (timerRunning) {
+        clearInterval(timer);
+        timerRunning = false;
+        const startBtn = document.getElementById('timer-start');
+        const pauseBtn = document.getElementById('timer-pause');
+        if (startBtn) {
+            startBtn.innerHTML = '<i class="fas fa-play"></i> Resume';
+            startBtn.style.display = 'flex';
+        }
+        if (pauseBtn) pauseBtn.style.display = 'none';
+        showToast('Timer paused', 'info');
+    }
 }
 
 // 7. Save Settings Function
@@ -1962,6 +1997,7 @@ window.editNote = editNote;
 window.deleteNotePrompt = deleteNotePrompt;
 window.deleteNote = deleteNote;
 window.startTimer = startTimer;
+window.pauseTimer = pauseTimer;
 window.resetTimer = resetTimer;
 window.toggleTheme = toggleTheme;
 window.showKeyboardShortcutsModal = showKeyboardShortcutsModal;
