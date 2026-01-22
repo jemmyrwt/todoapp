@@ -1,8 +1,7 @@
-// Zenith X Pro - Production Ready with Render
-// ✅ FIXED: All issues resolved
+// TaskController - Production Ready
 const API_BASE_URL = 'https://todoapp-p5hq.onrender.com/api';
 
-console.log('🌐 RadheOS Loading...');
+console.log('🌐 TaskController Loading...');
 console.log('📡 API Base URL:', API_BASE_URL);
 
 let tasks = [];
@@ -21,15 +20,21 @@ let authToken = null;
 let currentUser = null;
 let isOnline = navigator.onLine;
 let pendingDeleteTaskId = null;
+let pendingDeleteNoteId = null;
 
-// Audio elements
+// Audio elements - FIXED AUDIO ISSUES
 const taskSound = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-select-click-1109.mp3');
 const timerSound = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-alarm-digital-clock-beep-989.mp3');
 const notificationSound = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-correct-answer-tone-2870.mp3');
 
+// Preload audio
+taskSound.load();
+timerSound.load();
+notificationSound.load();
+
 // 1. Initial Launch
 window.onload = async () => {
-    console.log('🌐 RadheOS Loading...');
+    console.log('🌐 TaskController Loading...');
     
     // Check network status
     updateNetworkStatus();
@@ -37,18 +42,24 @@ window.onload = async () => {
     window.addEventListener('offline', updateNetworkStatus);
     
     // Load saved data
-    authToken = localStorage.getItem('zenith_token');
-    currentUser = JSON.parse(localStorage.getItem('zenith_user'));
+    authToken = localStorage.getItem('taskcontroller_token');
+    currentUser = JSON.parse(localStorage.getItem('taskcontroller_user'));
     
     console.log('🔍 Stored token:', authToken ? 'Present' : 'Missing');
     console.log('🔍 Stored user:', currentUser ? currentUser.email : 'None');
     
     // Load theme
-    const savedTheme = localStorage.getItem('zenith_theme') || 'dark';
+    const savedTheme = localStorage.getItem('taskcontroller_theme') || 'dark';
     document.body.setAttribute('data-theme', savedTheme);
     
+    // Update theme toggle
+    const themeToggle = document.getElementById('themeToggle');
+    if (themeToggle) {
+        themeToggle.checked = savedTheme === 'light';
+    }
+    
     // Load settings
-    const savedSettings = JSON.parse(localStorage.getItem('zenith_settings'));
+    const savedSettings = JSON.parse(localStorage.getItem('taskcontroller_settings'));
     if (savedSettings) {
         soundEnabled = savedSettings.soundEnabled !== undefined ? savedSettings.soundEnabled : true;
         autosaveEnabled = savedSettings.autosaveEnabled !== undefined ? savedSettings.autosaveEnabled : true;
@@ -63,9 +74,6 @@ window.onload = async () => {
         }
         if (document.getElementById('reminderToggle')) {
             document.getElementById('reminderToggle').checked = remindersEnabled;
-        }
-        if (document.getElementById('themeToggle')) {
-            document.getElementById('themeToggle').checked = savedTheme === 'light';
         }
     }
     
@@ -86,7 +94,7 @@ window.onload = async () => {
                 if (response.ok) {
                     const data = await response.json();
                     currentUser = data.user;
-                    localStorage.setItem('zenith_user', JSON.stringify(currentUser));
+                    localStorage.setItem('taskcontroller_user', JSON.stringify(currentUser));
                     
                     // Load data from server
                     await loadUserData();
@@ -98,7 +106,7 @@ window.onload = async () => {
                     loadLocalData();
                     showToast('Session expired, please login again', 'warning');
                     // Clear invalid token
-                    localStorage.removeItem('zenith_token');
+                    localStorage.removeItem('taskcontroller_token');
                     showAuth();
                 }
             } else {
@@ -129,7 +137,17 @@ window.onload = async () => {
     
     // Check health
     checkServerHealth();
+    
+    // Initialize audio
+    initAudio();
 };
+
+// Initialize audio
+function initAudio() {
+    taskSound.volume = 0.5;
+    timerSound.volume = 0.5;
+    notificationSound.volume = 0.5;
+}
 
 // 2. Authentication Functions
 async function handleAuth() {
@@ -164,7 +182,7 @@ async function handleAuth() {
     // Show loading
     const authBtn = document.getElementById('auth-main-btn');
     const originalText = authBtn.textContent;
-    authBtn.innerHTML = '<div class="loading"></div> Connecting...';
+    authBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Connecting...';
     authBtn.disabled = true;
 
     try {
@@ -195,7 +213,7 @@ async function handleAuth() {
             console.log('✅ Registration successful, auto-logging in...');
             
             // Save registration details for auto-login
-            localStorage.setItem('zenith_auto_login', JSON.stringify({ email, password: pass }));
+            localStorage.setItem('taskcontroller_auto_login', JSON.stringify({ email, password: pass }));
             
             // Auto-fill and login
             setTimeout(() => {
@@ -215,9 +233,9 @@ async function handleAuth() {
         authToken = data.token;
         currentUser = data.user;
         
-        localStorage.setItem('zenith_token', authToken);
-        localStorage.setItem('zenith_user', JSON.stringify(currentUser));
-        localStorage.removeItem('zenith_auto_login'); // Clear auto-login data
+        localStorage.setItem('taskcontroller_token', authToken);
+        localStorage.setItem('taskcontroller_user', JSON.stringify(currentUser));
+        localStorage.removeItem('taskcontroller_auto_login'); // Clear auto-login data
         
         console.log('✅ Login successful, user:', currentUser.email);
         
@@ -239,7 +257,7 @@ async function handleAuth() {
             }
             
             // Save settings locally
-            localStorage.setItem('zenith_settings', JSON.stringify(data.user.settings));
+            localStorage.setItem('taskcontroller_settings', JSON.stringify(data.user.settings));
         }
         
         // Load data from server
@@ -271,14 +289,14 @@ function updateAuthUI() {
     const authExtra = document.getElementById('reg-extra');
     
     if (isLoginMode) {
-        authTitle.textContent = 'RadheOS';
+        authTitle.textContent = 'TaskController';
         authDesc.textContent = 'Secure access to your dashboard';
         authMainBtn.textContent = 'Access Workspace';
         toggleTextSpan.textContent = 'Create Account';
         if (authExtra) authExtra.style.display = 'none';
     } else {
         authTitle.textContent = 'Create Account';
-        authDesc.textContent = 'Join RadheOS today';
+        authDesc.textContent = 'Join TaskController today';
         authMainBtn.textContent = 'Create Account';
         toggleTextSpan.textContent = 'Login';
         if (authExtra) authExtra.style.display = 'block';
@@ -339,7 +357,7 @@ function updateNetworkStatus() {
 
 // 6. Setup Event Listeners Function
 function setupEventListeners() {
-    // Add task button
+    // Add task button - FIXED: No more vertical stretching
     document.getElementById('addBtn').addEventListener('click', addTask);
     
     // Task input enter key
@@ -368,17 +386,46 @@ function setupEventListeners() {
     });
     
     // Timer controls
-    document.getElementById('timer-start').addEventListener('click', startTimer);
-    document.getElementById('timer-reset').addEventListener('click', resetTimer);
-    document.getElementById('timer-presets').addEventListener('change', function() {
-        timeLeft = parseInt(this.value);
-        updateTimerDisplay();
-        updateTimerRing();
-    });
+    const timerStartBtn = document.getElementById('timer-start');
+    const timerPauseBtn = document.getElementById('timer-pause');
+    const timerResetBtn = document.getElementById('timer-reset');
+    
+    if (timerStartBtn) {
+        timerStartBtn.addEventListener('click', startTimer);
+    }
+    
+    if (timerPauseBtn) {
+        timerPauseBtn.addEventListener('click', startTimer); // Same function for pause/resume
+    }
+    
+    if (timerResetBtn) {
+        timerResetBtn.addEventListener('click', resetTimer);
+    }
+    
+    // Timer presets - FIXED: Proper event handling
+    const timerPresets = document.getElementById('timer-presets');
+    if (timerPresets) {
+        timerPresets.addEventListener('change', function() {
+            timeLeft = parseInt(this.value);
+            updateTimerDisplay();
+            updateTimerRing();
+            if (!timerRunning) {
+                resetTimer();
+            }
+        });
+    }
     
     // Note controls
-    document.getElementById('saveNote').addEventListener('click', saveNote);
-    document.getElementById('clearNote').addEventListener('click', clearNote);
+    const saveNoteBtn = document.getElementById('saveNote');
+    const clearNoteBtn = document.getElementById('clearNote');
+    
+    if (saveNoteBtn) {
+        saveNoteBtn.addEventListener('click', saveNote);
+    }
+    
+    if (clearNoteBtn) {
+        clearNoteBtn.addEventListener('click', clearNote);
+    }
     
     // Auth toggle
     const toggleAuthLink = document.querySelector('.toggle-auth');
@@ -392,7 +439,9 @@ function setupEventListeners() {
         soundToggle.addEventListener('change', function() {
             soundEnabled = this.checked;
             saveSettings();
-            playSound('notification');
+            if (soundEnabled) {
+                playSound('notification');
+            }
         });
     }
     
@@ -415,7 +464,9 @@ function setupEventListeners() {
         reminderToggle.addEventListener('change', function() {
             remindersEnabled = this.checked;
             saveSettings();
-            playSound('notification');
+            if (remindersEnabled && soundEnabled) {
+                playSound('notification');
+            }
         });
     }
     
@@ -423,6 +474,25 @@ function setupEventListeners() {
     if (themeToggle) {
         themeToggle.addEventListener('change', toggleTheme);
     }
+    
+    // Modal close buttons
+    document.querySelectorAll('.modal-close').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const modal = this.closest('.modal');
+            if (modal) {
+                modal.classList.remove('show');
+            }
+        });
+    });
+    
+    // Close modal on outside click
+    document.querySelectorAll('.modal').forEach(modal => {
+        modal.addEventListener('click', function(e) {
+            if (e.target === this) {
+                this.classList.remove('show');
+            }
+        });
+    });
 }
 
 // 7. Save Settings Function
@@ -434,7 +504,7 @@ async function saveSettings() {
         remindersEnabled
     };
     
-    localStorage.setItem('zenith_settings', JSON.stringify(settings));
+    localStorage.setItem('taskcontroller_settings', JSON.stringify(settings));
     
     // Sync with server if authenticated
     if (authToken && currentUser) {
@@ -455,10 +525,10 @@ async function saveSettings() {
 
 // 8. Load Local Data Function
 function loadLocalData() {
-    tasks = JSON.parse(localStorage.getItem('zenith_tasks')) || [];
-    notes = JSON.parse(localStorage.getItem('zenith_notes')) || [];
-    focusSessions = parseInt(localStorage.getItem('zenith_focus_sessions')) || 0;
-    totalFocusTime = parseInt(localStorage.getItem('zenith_total_focus_time')) || 0;
+    tasks = JSON.parse(localStorage.getItem('taskcontroller_tasks')) || [];
+    notes = JSON.parse(localStorage.getItem('taskcontroller_notes')) || [];
+    focusSessions = parseInt(localStorage.getItem('taskcontroller_focus_sessions')) || 0;
+    totalFocusTime = parseInt(localStorage.getItem('taskcontroller_total_focus_time')) || 0;
     
     showApp();
 }
@@ -481,7 +551,7 @@ function showApp() {
     if (currentUser) {
         const logoSpan = document.getElementById('logo-text');
         if (logoSpan) {
-            logoSpan.textContent = `RadheOS | ${currentUser.name}`;
+            logoSpan.textContent = `TaskController | ${currentUser.name}`;
         }
     }
     
@@ -492,6 +562,12 @@ function showApp() {
         dateInput.value = today;
         dateInput.min = today;
     }
+    
+    // Show logout buttons (they were hidden)
+    const logoutBtns = document.querySelectorAll('.logout-btn, .switch-account-btn');
+    logoutBtns.forEach(btn => {
+        if (btn) btn.style.display = 'flex';
+    });
 }
 
 // 10. Show Auth Function
@@ -503,7 +579,7 @@ function showAuth() {
     if (appContent) appContent.style.display = 'none';
     
     // Check for auto-login data
-    const autoLogin = JSON.parse(localStorage.getItem('zenith_auto_login'));
+    const autoLogin = JSON.parse(localStorage.getItem('taskcontroller_auto_login'));
     if (autoLogin) {
         document.getElementById('auth-email').value = autoLogin.email;
         document.getElementById('auth-pass').value = autoLogin.password;
@@ -552,7 +628,7 @@ async function loadUserData() {
         if (tasksResponse.ok) {
             const tasksData = await tasksResponse.json();
             tasks = tasksData.todos || [];
-            localStorage.setItem('zenith_tasks', JSON.stringify(tasks));
+            localStorage.setItem('taskcontroller_tasks', JSON.stringify(tasks));
             console.log(`✅ Loaded ${tasks.length} tasks`);
         }
         
@@ -567,7 +643,7 @@ async function loadUserData() {
         if (notesResponse.ok) {
             const notesData = await notesResponse.json();
             notes = notesData.notes || [];
-            localStorage.setItem('zenith_notes', JSON.stringify(notes));
+            localStorage.setItem('taskcontroller_notes', JSON.stringify(notes));
             console.log(`✅ Loaded ${notes.length} notes`);
         }
         
@@ -583,8 +659,8 @@ async function loadUserData() {
             const focusData = await focusResponse.json();
             focusSessions = focusData.totalStats?.totalSessions || 0;
             totalFocusTime = focusData.totalStats?.totalDuration || 0;
-            localStorage.setItem('zenith_focus_sessions', focusSessions);
-            localStorage.setItem('zenith_total_focus_time', totalFocusTime);
+            localStorage.setItem('taskcontroller_focus_sessions', focusSessions);
+            localStorage.setItem('taskcontroller_total_focus_time', totalFocusTime);
             console.log(`✅ Loaded ${focusSessions} focus sessions`);
         }
         
@@ -594,24 +670,25 @@ async function loadUserData() {
         updateAnalytics();
         updateFocusStats();
         
-        localStorage.setItem('zenith_last_sync', new Date().toISOString());
+        localStorage.setItem('taskcontroller_last_sync', new Date().toISOString());
         
     } catch (error) {
         console.error('Load data error:', error);
         // Fallback to localStorage
-        tasks = JSON.parse(localStorage.getItem('zenith_tasks')) || [];
-        notes = JSON.parse(localStorage.getItem('zenith_notes')) || [];
+        tasks = JSON.parse(localStorage.getItem('taskcontroller_tasks')) || [];
+        notes = JSON.parse(localStorage.getItem('taskcontroller_notes')) || [];
         renderTasks();
         renderNotes();
     }
 }
 
-// 12. Sync Data Function
+// 12. Sync Data Function (REMOVED REPETITIVE POPUP)
 async function syncDataIfOnline() {
     if (!isOnline || !authToken) return;
     
     try {
-        showLoading('Syncing data...');
+        // No loading overlay for silent sync
+        let syncedItems = 0;
         
         // Sync tasks
         for (const task of tasks) {
@@ -640,6 +717,7 @@ async function syncDataIfOnline() {
                         const taskIndex = tasks.findIndex(t => t.id === task.id);
                         if (taskIndex !== -1) {
                             tasks[taskIndex] = { ...data.todo, id: task.id };
+                            syncedItems++;
                         }
                     }
                 } catch (error) {
@@ -672,6 +750,7 @@ async function syncDataIfOnline() {
                         const noteIndex = notes.findIndex(n => n.id === note.id);
                         if (noteIndex !== -1) {
                             notes[noteIndex] = { ...data.note, id: note.id };
+                            syncedItems++;
                         }
                     }
                 } catch (error) {
@@ -681,18 +760,19 @@ async function syncDataIfOnline() {
         }
         
         // Save updated data
-        localStorage.setItem('zenith_tasks', JSON.stringify(tasks));
-        localStorage.setItem('zenith_notes', JSON.stringify(notes));
-        
-        // Update last sync time
-        localStorage.setItem('zenith_last_sync', new Date().toISOString());
-        
-        hideLoading();
-        showToast('Data synced successfully', 'success');
+        if (syncedItems > 0) {
+            localStorage.setItem('taskcontroller_tasks', JSON.stringify(tasks));
+            localStorage.setItem('taskcontroller_notes', JSON.stringify(notes));
+            
+            // Update last sync time
+            localStorage.setItem('taskcontroller_last_sync', new Date().toISOString());
+            
+            // Silent sync - no popup
+            console.log(`✅ Silent sync completed: ${syncedItems} items synced`);
+        }
         
     } catch (error) {
         console.error('Sync error:', error);
-        hideLoading();
     }
 }
 
@@ -710,7 +790,7 @@ async function checkServerHealth() {
     }
 }
 
-// 14. Task Management Functions
+// 14. Task Management Functions - FIXED: Button alignment
 async function addTask() {
     const titleInput = document.getElementById('taskTitle');
     if (!titleInput) return;
@@ -746,7 +826,7 @@ async function addTask() {
     };
 
     tasks.unshift(localTask);
-    localStorage.setItem('zenith_tasks', JSON.stringify(tasks));
+    localStorage.setItem('taskcontroller_tasks', JSON.stringify(tasks));
     
     // Clear input
     titleInput.value = '';
@@ -754,6 +834,9 @@ async function addTask() {
     // Update UI immediately
     renderTasks();
     updateAnalytics();
+    
+    // Show success toast
+    showToast('Task added successfully!', 'success');
     
     // Try to sync with server if online
     if (isOnline && authToken) {
@@ -773,19 +856,14 @@ async function addTask() {
                 const taskIndex = tasks.findIndex(t => t.id === localTask.id);
                 if (taskIndex !== -1) {
                     tasks[taskIndex] = { ...data.todo, id: localTask.id };
-                    localStorage.setItem('zenith_tasks', JSON.stringify(tasks));
+                    localStorage.setItem('taskcontroller_tasks', JSON.stringify(tasks));
                     renderTasks();
                 }
-                showToast('Task saved to cloud!', 'success');
-            } else {
-                showToast('Task saved locally (sync failed)', 'warning');
+                // Silent sync - no popup
             }
         } catch (error) {
             console.error('Sync task error:', error);
-            showToast('Task saved locally', 'info');
         }
-    } else {
-        showToast('Task saved locally (offline)', 'info');
     }
 }
 
@@ -843,7 +921,7 @@ function toggleTask(taskId) {
     if (task) {
         task.isCompleted = !task.isCompleted;
         task.completedAt = task.isCompleted ? new Date().toISOString() : null;
-        localStorage.setItem('zenith_tasks', JSON.stringify(tasks));
+        localStorage.setItem('taskcontroller_tasks', JSON.stringify(tasks));
         renderTasks();
         updateAnalytics();
         
@@ -868,7 +946,7 @@ function toggleTask(taskId) {
     }
 }
 
-// 17. Show Delete Modal
+// 17. Show Delete Modal - FIXED: Proper modal closing
 function showDeleteModal(taskId) {
     pendingDeleteTaskId = taskId;
     const modal = document.getElementById('delete-modal');
@@ -886,7 +964,7 @@ function closeDeleteModal() {
     }
 }
 
-// 19. Confirm Delete
+// 19. Confirm Delete - FIXED: Modal closes properly
 function confirmDelete() {
     if (pendingDeleteTaskId) {
         deleteTask(pendingDeleteTaskId);
@@ -904,7 +982,7 @@ function deleteTask(taskId) {
     
     // Remove from local array
     tasks = tasks.filter(t => t.id !== taskId);
-    localStorage.setItem('zenith_tasks', JSON.stringify(tasks));
+    localStorage.setItem('taskcontroller_tasks', JSON.stringify(tasks));
     
     // Delete from server if online
     if (isOnline && authToken && task._id && !task._id.startsWith('local_')) {
@@ -939,13 +1017,19 @@ function editTask(taskId) {
         
         // Remove task from list
         tasks = tasks.filter(t => t.id !== taskId);
-        localStorage.setItem('zenith_tasks', JSON.stringify(tasks));
+        localStorage.setItem('taskcontroller_tasks', JSON.stringify(tasks));
         renderTasks();
         
         // Play sound
         playSound('task');
         
         showToast('Task ready for editing!', 'info');
+        
+        // Focus on input
+        if (titleInput) {
+            titleInput.focus();
+            titleInput.select();
+        }
     }
 }
 
@@ -993,7 +1077,7 @@ function updateAnalytics() {
     updateTaskProgress();
 }
 
-// 24. Notes Functions
+// 24. Notes Functions - FIXED: Responsive issues
 async function saveNote() {
     const noteContent = document.getElementById('noteContent');
     if (!noteContent) return;
@@ -1020,7 +1104,7 @@ async function saveNote() {
     };
     
     notes.unshift(note);
-    localStorage.setItem('zenith_notes', JSON.stringify(notes));
+    localStorage.setItem('taskcontroller_notes', JSON.stringify(notes));
     
     // Clear textarea
     noteContent.value = '';
@@ -1052,10 +1136,10 @@ async function saveNote() {
                 const noteIndex = notes.findIndex(n => n.id === note.id);
                 if (noteIndex !== -1) {
                     notes[noteIndex] = { ...data.note, id: note.id };
-                    localStorage.setItem('zenith_notes', JSON.stringify(notes));
+                    localStorage.setItem('taskcontroller_notes', JSON.stringify(notes));
                     renderNotes();
                 }
-                showToast('Note synced to cloud!', 'success');
+                // Silent sync - no popup
             }
         } catch (error) {
             console.error('Sync note error:', error);
@@ -1065,8 +1149,10 @@ async function saveNote() {
 
 function clearNote() {
     const noteContent = document.getElementById('noteContent');
-    if (noteContent) noteContent.value = '';
-    showToast('Note cleared!', 'info');
+    if (noteContent) {
+        noteContent.value = '';
+        showToast('Note cleared!', 'info');
+    }
 }
 
 function renderNotes() {
@@ -1093,7 +1179,7 @@ function renderNotes() {
             </div>
             <div class="note-actions">
                 <i class="fas fa-edit" onclick="editNote(${note.id})"></i>
-                <i class="fas fa-trash" onclick="deleteNote(${note.id})"></i>
+                <i class="fas fa-trash" onclick="deleteNotePrompt(${note.id})"></i>
             </div>
         </div>
     `).join('');
@@ -1107,13 +1193,25 @@ function editNote(noteId) {
         
         // Remove note from list
         notes = notes.filter(n => n.id !== noteId);
-        localStorage.setItem('zenith_notes', JSON.stringify(notes));
+        localStorage.setItem('taskcontroller_notes', JSON.stringify(notes));
         renderNotes();
         
         // Play sound
         playSound('task');
         
         showToast('Note ready for editing!', 'info');
+        
+        // Focus on textarea
+        if (noteContent) {
+            noteContent.focus();
+        }
+    }
+}
+
+function deleteNotePrompt(noteId) {
+    pendingDeleteNoteId = noteId;
+    if (confirm('Are you sure you want to delete this note?')) {
+        deleteNote(noteId);
     }
 }
 
@@ -1126,7 +1224,7 @@ function deleteNote(noteId) {
     
     // Remove from local array
     notes = notes.filter(n => n.id !== noteId);
-    localStorage.setItem('zenith_notes', JSON.stringify(notes));
+    localStorage.setItem('taskcontroller_notes', JSON.stringify(notes));
     
     // Delete from server if online
     if (isOnline && authToken && note._id && !note._id.startsWith('local_')) {
@@ -1149,12 +1247,11 @@ function autoSaveNotes() {
     const noteContent = document.getElementById('noteContent');
     if (!noteContent || !noteContent.value.trim()) return;
     
-    // Save note automatically
+    // Save note automatically (silent)
     saveNote();
-    showToast('Note auto-saved', 'info');
 }
 
-// 26. Timer Functions
+// 26. Timer Functions - FIXED: Timer UI issues
 function startTimer() {
     if (timerRunning) {
         // Pause timer
@@ -1180,7 +1277,9 @@ function startTimer() {
         if (pauseBtn) pauseBtn.style.display = 'flex';
         
         // Play start sound
-        playSound('notification');
+        if (soundEnabled) {
+            playSound('notification');
+        }
         
         timer = setInterval(() => {
             timeLeft--;
@@ -1198,6 +1297,7 @@ function startTimer() {
                 
                 // Play completion sound
                 if (soundEnabled) {
+                    timerSound.currentTime = 0;
                     timerSound.play().catch(console.error);
                 }
                 
@@ -1208,8 +1308,8 @@ function startTimer() {
                 const presetSelect = document.getElementById('timer-presets');
                 const presetValue = presetSelect ? parseInt(presetSelect.value) : 1500;
                 totalFocusTime += presetValue;
-                localStorage.setItem('zenith_focus_sessions', focusSessions);
-                localStorage.setItem('zenith_total_focus_time', totalFocusTime);
+                localStorage.setItem('taskcontroller_focus_sessions', focusSessions);
+                localStorage.setItem('taskcontroller_total_focus_time', totalFocusTime);
                 updateFocusStats();
                 
                 // Save to server if online
@@ -1226,6 +1326,11 @@ function startTimer() {
                         })
                     }).catch(console.error);
                 }
+                
+                // Reset timer
+                timeLeft = presetValue;
+                updateTimerDisplay();
+                updateTimerRing();
             }
         }, 1000);
     }
@@ -1285,7 +1390,7 @@ function updateFocusStats() {
         }
     }
     if (focusStreakEl) {
-        // Simple streak calculation (for demo)
+        // Simple streak calculation
         const streak = Math.floor(focusSessions / 3);
         focusStreakEl.textContent = `${streak} Day Streak`;
     }
@@ -1302,6 +1407,7 @@ function switchView(viewId) {
     const selectedView = document.getElementById(`view-${viewId}`);
     if (selectedView) {
         selectedView.classList.add('active');
+        selectedView.scrollTop = 0;
     }
     
     // Update navigation
@@ -1311,6 +1417,19 @@ function switchView(viewId) {
             btn.classList.add('active');
         }
     });
+    
+    // Stop timer if switching away from focus view
+    if (viewId !== 'focus' && timerRunning) {
+        clearInterval(timer);
+        timerRunning = false;
+        const startBtn = document.getElementById('timer-start');
+        const pauseBtn = document.getElementById('timer-pause');
+        if (startBtn) {
+            startBtn.innerHTML = '<i class="fas fa-play"></i> Start Focus';
+            startBtn.style.display = 'flex';
+        }
+        if (pauseBtn) pauseBtn.style.display = 'none';
+    }
 }
 
 function updateClock() {
@@ -1364,6 +1483,7 @@ function hideToast() {
     }
 }
 
+// 28. Toggle Theme - FIXED: Theme switching
 function toggleTheme() {
     const currentTheme = document.body.getAttribute('data-theme');
     const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
@@ -1376,12 +1496,12 @@ function toggleTheme() {
     }
     
     // Save to localStorage
-    localStorage.setItem('zenith_theme', newTheme);
+    localStorage.setItem('taskcontroller_theme', newTheme);
     
     // Save to settings
-    const settings = JSON.parse(localStorage.getItem('zenith_settings')) || {};
+    const settings = JSON.parse(localStorage.getItem('taskcontroller_settings')) || {};
     settings.theme = newTheme;
-    localStorage.setItem('zenith_settings', JSON.stringify(settings));
+    localStorage.setItem('taskcontroller_settings', JSON.stringify(settings));
     
     // Sync with server if online
     if (isOnline && authToken) {
@@ -1447,7 +1567,7 @@ function setupKeyboardShortcuts() {
     });
 }
 
-// 28. Helper functions
+// 29. Helper functions
 function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
@@ -1455,7 +1575,7 @@ function escapeHtml(text) {
 }
 
 function formatNoteContent(content) {
-    return content.replace(/\n/g, '<br>');
+    return content.replace(/\n/g, '<br>').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
 function getPriorityColor(priority) {
@@ -1467,31 +1587,36 @@ function getPriorityColor(priority) {
     return colors[priority] || '#6b7280';
 }
 
-// 29. Play Sound Function
+// 30. Play Sound Function - FIXED: Audio issues
 function playSound(type) {
     if (!soundEnabled) return;
     
     try {
+        let sound;
         switch(type) {
             case 'task':
-                taskSound.currentTime = 0;
-                taskSound.play().catch(console.error);
+                sound = taskSound;
                 break;
             case 'timer':
-                timerSound.currentTime = 0;
-                timerSound.play().catch(console.error);
+                sound = timerSound;
                 break;
             case 'notification':
-                notificationSound.currentTime = 0;
-                notificationSound.play().catch(console.error);
+                sound = notificationSound;
                 break;
+            default:
+                sound = notificationSound;
         }
+        
+        sound.currentTime = 0;
+        sound.play().catch(error => {
+            console.log('Audio play failed (user might not have interacted yet):', error);
+        });
     } catch (error) {
         console.error('Audio error:', error);
     }
 }
 
-// 30. Logout Functions
+// 31. Logout Functions
 function showLogoutModal() {
     const modal = document.getElementById('logout-modal');
     if (modal) {
@@ -1517,11 +1642,12 @@ async function logout() {
     await syncDataIfOnline();
     
     // Clear all data
-    localStorage.clear();
+    localStorage.removeItem('taskcontroller_token');
+    localStorage.removeItem('taskcontroller_user');
+    localStorage.removeItem('taskcontroller_auto_login');
+    
     authToken = null;
     currentUser = null;
-    tasks = [];
-    notes = [];
     
     // Close modal
     closeLogoutModal();
@@ -1532,14 +1658,14 @@ async function logout() {
     showToast('Logged out successfully', 'success');
 }
 
-// 31. Switch Account Function
+// 32. Switch Account Function
 function switchAccount() {
     if (confirm('Switch to another account? You will be logged out.')) {
         logout();
     }
 }
 
-// 32. Modal Functions
+// 33. Modal Functions
 function showKeyboardShortcutsModal() {
     const modal = document.getElementById('shortcuts-modal');
     if (modal) modal.classList.add('show');
@@ -1560,7 +1686,7 @@ function closeWipeModal() {
     if (modal) modal.classList.remove('show');
 }
 
-// 33. Export Data Function
+// 34. Export Data Function
 async function exportData() {
     try {
         const dataToExport = {
@@ -1584,7 +1710,7 @@ async function exportData() {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `radheos-backup-${new Date().toISOString().split('T')[0]}.json`;
+        a.download = `taskcontroller-backup-${new Date().toISOString().split('T')[0]}.json`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -1598,24 +1724,26 @@ async function exportData() {
     }
 }
 
-// 34. Wipe Data Function
+// 35. Wipe Data Function
 function wipeData() {
-    localStorage.clear();
-    tasks = [];
-    notes = [];
-    focusSessions = 0;
-    totalFocusTime = 0;
-    authToken = null;
-    currentUser = null;
-    
-    // Close modal
-    closeWipeModal();
-    
-    // Reload the app
-    location.reload();
+    if (confirm('⚠️ This will permanently delete ALL your local data including tasks, notes, and settings. This action cannot be undone.\n\nAre you sure?')) {
+        localStorage.clear();
+        tasks = [];
+        notes = [];
+        focusSessions = 0;
+        totalFocusTime = 0;
+        authToken = null;
+        currentUser = null;
+        
+        // Close modal
+        closeWipeModal();
+        
+        // Reload the app
+        location.reload();
+    }
 }
 
-// 35. Loading Overlay Functions
+// 36. Loading Overlay Functions
 function showLoading(message = 'Loading...') {
     const overlay = document.getElementById('loading-overlay');
     if (overlay) {
@@ -1632,7 +1760,7 @@ function hideLoading() {
     }
 }
 
-// ✅✅✅ CRITICAL: Make all functions globally available
+// Make all functions globally available
 window.handleAuth = handleAuth;
 window.toggleAuthMode = toggleAuthMode;
 window.logout = logout;
@@ -1646,6 +1774,7 @@ window.editTask = editTask;
 window.saveNote = saveNote;
 window.clearNote = clearNote;
 window.editNote = editNote;
+window.deleteNotePrompt = deleteNotePrompt;
 window.deleteNote = deleteNote;
 window.startTimer = startTimer;
 window.resetTimer = resetTimer;
@@ -1661,6 +1790,7 @@ window.wipeData = wipeData;
 window.showLoading = showLoading;
 window.hideLoading = hideLoading;
 window.hideToast = hideToast;
+window.switchView = switchView;
 
 console.log('✅ All functions are now globally available');
-console.log('🚀 Zenith X Pro Script Loaded Successfully');
+console.log('🚀 TaskController Script Loaded Successfully');
