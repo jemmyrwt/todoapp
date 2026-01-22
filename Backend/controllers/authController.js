@@ -1,5 +1,6 @@
 const User = require('../models/User');
 const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs'); // ✅ ADDED
 
 // @desc    Register user
 // @route   POST /api/auth/register
@@ -36,14 +37,19 @@ exports.register = async (req, res) => {
       });
     }
 
+    // ✅✅✅ FIXED: Hash password before saving
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
     // Create user
     const user = await User.create({
       name,
       email: email.toLowerCase(),
-      password
+      password: hashedPassword // ✅ HASHED PASSWORD
     });
 
     console.log('✅ User created:', user.email);
+    console.log('🔐 Password hash:', user.password.substring(0, 20) + '...');
 
     // Generate token
     const token = user.generateAuthToken();
@@ -93,15 +99,23 @@ exports.login = async (req, res) => {
 
     // Check if user exists
     const user = await User.findOne({ email: email.toLowerCase() }).select('+password');
+    
     if (!user) {
+      console.log('❌ User not found:', email);
       return res.status(401).json({
         success: false,
         message: 'Invalid credentials'
       });
     }
 
-    // Check password
-    const isMatch = await user.comparePassword(password);
+    console.log('🔍 User found:', user.email);
+    console.log('🔐 Stored hash:', user.password.substring(0, 20) + '...');
+
+    // ✅✅✅ FIXED: Use bcrypt.compare directly
+    const isMatch = await bcrypt.compare(password, user.password);
+    
+    console.log('✅ Password valid:', isMatch);
+
     if (!isMatch) {
       return res.status(401).json({
         success: false,
@@ -109,7 +123,7 @@ exports.login = async (req, res) => {
       });
     }
 
-    console.log('✅ Login successful for:', user.email);
+    console.log('🎉 Login successful for:', user.email);
 
     // Generate token
     const token = user.generateAuthToken();
@@ -118,17 +132,15 @@ exports.login = async (req, res) => {
     user.lastActive = Date.now();
     await user.save();
 
+    // Remove password from response
+    const userWithoutPassword = user.toObject();
+    delete userWithoutPassword.password;
+
     res.json({
       success: true,
       message: 'Login successful',
       token,
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        avatar: user.avatar,
-        settings: user.settings
-      }
+      user: userWithoutPassword
     });
 
   } catch (error) {
@@ -282,7 +294,7 @@ exports.changePassword = async (req, res) => {
     }
 
     // Verify current password
-    const isMatch = await user.comparePassword(currentPassword);
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
     if (!isMatch) {
       return res.status(401).json({
         success: false,
@@ -290,8 +302,10 @@ exports.changePassword = async (req, res) => {
       });
     }
 
-    // Update password
-    user.password = newPassword;
+    // Hash new password
+    const salt = await bcrypt.genSalt(10);
+    user.password = await bcrypt.hash(newPassword, salt);
+    
     await user.save();
 
     res.json({
@@ -301,6 +315,50 @@ exports.changePassword = async (req, res) => {
 
   } catch (error) {
     console.error('❌ Change password error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error'
+    });
+  }
+};
+
+// ✅ ADDED: Check email availability
+exports.checkEmail = async (req, res) => {
+  try {
+    const { email } = req.body;
+    
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide email'
+      });
+    }
+
+    const userExists = await User.findOne({ email: email.toLowerCase() });
+    
+    res.json({
+      success: true,
+      available: !userExists
+    });
+
+  } catch (error) {
+    console.error('Check email error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error'
+    });
+  }
+};
+
+// ✅ ADDED: Logout
+exports.logout = async (req, res) => {
+  try {
+    res.json({
+      success: true,
+      message: 'Logged out successfully'
+    });
+  } catch (error) {
+    console.error('Logout error:', error);
     res.status(500).json({
       success: false,
       message: 'Server error'
