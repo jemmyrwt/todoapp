@@ -155,7 +155,7 @@ userSchema.methods.generatePasswordResetToken = function() {
   return resetToken;
 };
 
-// ✅ ADDED: Update last active timestamp
+// Update last active timestamp
 userSchema.methods.updateLastActive = async function() {
   this.lastActive = Date.now();
   await this.save();
