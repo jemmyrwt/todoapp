@@ -1,5 +1,5 @@
 // Zenith X Pro - Production Ready with Render
-// ✅ FIXED: Correct API URL for Render
+// ✅ FIXED: All auth functions are now globally available
 const API_BASE_URL = 'https://todoapp-p5hq.onrender.com/api';
 
 console.log('🌐 Zenith X Pro Loading...');
@@ -98,9 +98,11 @@ window.onload = async () => {
 
 // 2. Authentication Functions
 async function handleAuth() {
+  console.log('🔑 handleAuth() called');
+  
   const email = document.getElementById('auth-email').value.trim();
   const pass = document.getElementById('auth-pass').value.trim();
-  const name = document.getElementById('auth-name').value.trim();
+  const name = document.getElementById('auth-name') ? document.getElementById('auth-name').value.trim() : '';
 
   if (!email || !pass) {
     showToast('Please fill all required fields!', 'error');
@@ -195,6 +197,8 @@ async function handleAuth() {
 
 // 3. Toggle Auth Mode Function
 function toggleAuthMode() {
+  console.log('🔄 toggleAuthMode() called');
+  
   isLoginMode = !isLoginMode;
   
   const authTitle = document.getElementById('auth-title');
@@ -208,17 +212,19 @@ function toggleAuthMode() {
     authDesc.textContent = 'Secure access to your dashboard';
     authMainBtn.textContent = 'Access Workspace';
     toggleTextSpan.textContent = 'Create Account';
-    authExtra.style.display = 'none';
+    if (authExtra) authExtra.style.display = 'none';
   } else {
     authTitle.textContent = 'Create Account';
     authDesc.textContent = 'Join Zenith X Pro today';
     authMainBtn.textContent = 'Create Account';
     toggleTextSpan.textContent = 'Login';
-    authExtra.style.display = 'block';
+    if (authExtra) authExtra.style.display = 'block';
   }
   
   // Clear inputs
-  document.getElementById('auth-name').value = '';
+  if (document.getElementById('auth-name')) {
+    document.getElementById('auth-name').value = '';
+  }
   document.getElementById('auth-email').value = '';
   document.getElementById('auth-pass').value = '';
   
@@ -319,27 +325,42 @@ function setupEventListeners() {
   document.getElementById('saveNote').addEventListener('click', saveNote);
   document.getElementById('clearNote').addEventListener('click', clearNote);
   
-  // Auth toggle
-  document.querySelector('.toggle-auth').addEventListener('click', toggleAuthMode);
+  // Auth toggle - FIXED: Use event listener instead of inline onclick
+  const toggleAuthLink = document.querySelector('.toggle-auth');
+  if (toggleAuthLink) {
+    toggleAuthLink.addEventListener('click', toggleAuthMode);
+  }
   
   // Theme toggle
-  document.querySelector('[onclick="toggleTheme()"]').addEventListener('click', toggleTheme);
+  const themeBtn = document.querySelector('[onclick="toggleTheme()"]');
+  if (themeBtn) {
+    themeBtn.addEventListener('click', toggleTheme);
+  }
   
   // Settings toggles
-  document.getElementById('soundToggle').addEventListener('change', function() {
-    soundEnabled = this.checked;
-    saveSettings();
-  });
+  const soundToggle = document.getElementById('soundToggle');
+  if (soundToggle) {
+    soundToggle.addEventListener('change', function() {
+      soundEnabled = this.checked;
+      saveSettings();
+    });
+  }
   
-  document.getElementById('autosaveToggle').addEventListener('change', function() {
-    autosaveEnabled = this.checked;
-    saveSettings();
-  });
+  const autosaveToggle = document.getElementById('autosaveToggle');
+  if (autosaveToggle) {
+    autosaveToggle.addEventListener('change', function() {
+      autosaveEnabled = this.checked;
+      saveSettings();
+    });
+  }
   
-  document.getElementById('reminderToggle').addEventListener('change', function() {
-    remindersEnabled = this.checked;
-    saveSettings();
-  });
+  const reminderToggle = document.getElementById('reminderToggle');
+  if (reminderToggle) {
+    reminderToggle.addEventListener('change', function() {
+      remindersEnabled = this.checked;
+      saveSettings();
+    });
+  }
 }
 
 // 6. Save Settings Function
@@ -382,9 +403,15 @@ function loadLocalData() {
     document.body.setAttribute('data-theme', savedSettings.theme || 'dark');
     
     // Update toggle switches
-    document.getElementById('soundToggle').checked = soundEnabled;
-    document.getElementById('autosaveToggle').checked = autosaveEnabled;
-    document.getElementById('reminderToggle').checked = remindersEnabled;
+    if (document.getElementById('soundToggle')) {
+      document.getElementById('soundToggle').checked = soundEnabled;
+    }
+    if (document.getElementById('autosaveToggle')) {
+      document.getElementById('autosaveToggle').checked = autosaveEnabled;
+    }
+    if (document.getElementById('reminderToggle')) {
+      document.getElementById('reminderToggle').checked = remindersEnabled;
+    }
   }
   
   showApp();
@@ -392,8 +419,11 @@ function loadLocalData() {
 
 // 8. Show App Function
 function showApp() {
-  document.getElementById('auth-screen').style.display = 'none';
-  document.getElementById('app-content').style.display = 'grid';
+  const authScreen = document.getElementById('auth-screen');
+  const appContent = document.getElementById('app-content');
+  
+  if (authScreen) authScreen.style.display = 'none';
+  if (appContent) appContent.style.display = 'grid';
   
   // Initialize app
   renderTasks();
@@ -403,30 +433,48 @@ function showApp() {
   
   // Update user info
   if (currentUser) {
-    document.querySelector('.logo span').textContent = `Zenith X | ${currentUser.name}`;
+    const logoSpan = document.querySelector('.logo span');
+    if (logoSpan) {
+      logoSpan.textContent = `Zenith X | ${currentUser.name}`;
+    }
   }
   
   // Set today's date
-  const today = new Date().toISOString().split('T')[0];
-  document.getElementById('dateVal').value = today;
-  document.getElementById('dateVal').min = today;
+  const dateInput = document.getElementById('dateVal');
+  if (dateInput) {
+    const today = new Date().toISOString().split('T')[0];
+    dateInput.value = today;
+    dateInput.min = today;
+  }
 }
 
 // 9. Show Auth Function
 function showAuth() {
-  document.getElementById('auth-screen').style.display = 'flex';
-  document.getElementById('app-content').style.display = 'none';
-  document.getElementById('auth-email').focus();
+  const authScreen = document.getElementById('auth-screen');
+  const appContent = document.getElementById('app-content');
+  
+  if (authScreen) authScreen.style.display = 'flex';
+  if (appContent) appContent.style.display = 'none';
+  
+  // Focus on email field
+  const emailInput = document.getElementById('auth-email');
+  if (emailInput) emailInput.focus();
   
   // Reset auth mode to login
   isLoginMode = true;
   const authExtra = document.getElementById('reg-extra');
-  authExtra.style.display = 'none';
+  if (authExtra) authExtra.style.display = 'none';
   
   // Clear inputs
-  document.getElementById('auth-email').value = '';
-  document.getElementById('auth-pass').value = '';
-  document.getElementById('auth-name').value = '';
+  if (document.getElementById('auth-email')) {
+    document.getElementById('auth-email').value = '';
+  }
+  if (document.getElementById('auth-pass')) {
+    document.getElementById('auth-pass').value = '';
+  }
+  if (document.getElementById('auth-name')) {
+    document.getElementById('auth-name').value = '';
+  }
 }
 
 // 10. Load User Data Function
@@ -564,19 +612,22 @@ async function checkServerHealth() {
 }
 
 // 13. Task Management Functions
-function addTask() {
-  const title = document.getElementById('taskTitle').value.trim();
+async function addTask() {
+  const titleInput = document.getElementById('taskTitle');
+  if (!titleInput) return;
+  
+  const title = titleInput.value.trim();
   if (!title) {
     showToast('Please enter a task title!', 'warning');
-    document.getElementById('taskTitle').focus();
+    titleInput.focus();
     return;
   }
 
   const taskData = {
     title: title,
-    priority: document.getElementById('prioVal').value,
-    category: document.getElementById('catVal').value,
-    dueDate: document.getElementById('dateVal').value || null
+    priority: document.getElementById('prioVal') ? document.getElementById('prioVal').value : 'medium',
+    category: document.getElementById('catVal') ? document.getElementById('catVal').value : 'Work',
+    dueDate: document.getElementById('dateVal') ? document.getElementById('dateVal').value || null : null
   };
 
   // Create local task immediately
@@ -594,7 +645,7 @@ function addTask() {
   localStorage.setItem('zenith_tasks', JSON.stringify(tasks));
   
   // Clear input
-  document.getElementById('taskTitle').value = '';
+  titleInput.value = '';
   
   // Update UI immediately
   renderTasks();
@@ -710,10 +761,17 @@ function deleteTask(taskId) {
 function editTask(taskId) {
   const task = tasks.find(t => t.id === taskId);
   if (task) {
-    document.getElementById('taskTitle').value = task.title;
-    document.getElementById('prioVal').value = task.priority;
-    document.getElementById('catVal').value = task.category;
-    document.getElementById('dateVal').value = task.dueDate || '';
+    const titleInput = document.getElementById('taskTitle');
+    if (titleInput) titleInput.value = task.title;
+    
+    const prioSelect = document.getElementById('prioVal');
+    if (prioSelect) prioSelect.value = task.priority;
+    
+    const catSelect = document.getElementById('catVal');
+    if (catSelect) catSelect.value = task.category;
+    
+    const dateInput = document.getElementById('dateVal');
+    if (dateInput) dateInput.value = task.dueDate || '';
     
     // Remove task from list
     tasks = tasks.filter(t => t.id !== taskId);
@@ -769,7 +827,10 @@ function updateAnalytics() {
 
 // 20. Notes Functions
 function saveNote() {
-  const content = document.getElementById('noteContent').value.trim();
+  const noteContent = document.getElementById('noteContent');
+  if (!noteContent) return;
+  
+  const content = noteContent.value.trim();
   if (!content) {
     showToast('Please enter note content!', 'warning');
     return;
@@ -786,7 +847,7 @@ function saveNote() {
   localStorage.setItem('zenith_notes', JSON.stringify(notes));
   
   // Clear textarea
-  document.getElementById('noteContent').value = '';
+  noteContent.value = '';
   
   // Update UI
   renderNotes();
@@ -794,7 +855,8 @@ function saveNote() {
 }
 
 function clearNote() {
-  document.getElementById('noteContent').value = '';
+  const noteContent = document.getElementById('noteContent');
+  if (noteContent) noteContent.value = '';
   showToast('Note cleared!', 'info');
 }
 
@@ -831,7 +893,8 @@ function renderNotes() {
 function editNote(noteId) {
   const note = notes.find(n => n.id === noteId);
   if (note) {
-    document.getElementById('noteContent').value = note.content;
+    const noteContent = document.getElementById('noteContent');
+    if (noteContent) noteContent.value = note.content;
     
     // Remove note from list
     notes = notes.filter(n => n.id !== noteId);
@@ -855,11 +918,13 @@ function startTimer() {
   if (timerRunning) {
     clearInterval(timer);
     timerRunning = false;
-    document.getElementById('timer-start').textContent = 'Resume Focus';
+    const startBtn = document.getElementById('timer-start');
+    if (startBtn) startBtn.textContent = 'Resume Focus';
     showToast('Timer paused', 'info');
   } else {
     timerRunning = true;
-    document.getElementById('timer-start').textContent = 'Pause Focus';
+    const startBtn = document.getElementById('timer-start');
+    if (startBtn) startBtn.textContent = 'Pause Focus';
     
     timer = setInterval(() => {
       timeLeft--;
@@ -868,12 +933,14 @@ function startTimer() {
       if (timeLeft <= 0) {
         clearInterval(timer);
         timerRunning = false;
-        document.getElementById('timer-start').textContent = 'Initiate Focus';
+        if (startBtn) startBtn.textContent = 'Initiate Focus';
         showToast('Focus session completed!', 'success');
         
         // Record session
         focusSessions++;
-        totalFocusTime += parseInt(document.getElementById('timer-presets').value) - timeLeft;
+        const presetSelect = document.getElementById('timer-presets');
+        const presetValue = presetSelect ? parseInt(presetSelect.value) : 1500;
+        totalFocusTime += presetValue - timeLeft;
         localStorage.setItem('zenith_focus_sessions', focusSessions);
         localStorage.setItem('zenith_total_focus_time', totalFocusTime);
         updateFocusStats();
@@ -885,9 +952,11 @@ function startTimer() {
 function resetTimer() {
   clearInterval(timer);
   timerRunning = false;
-  timeLeft = parseInt(document.getElementById('timer-presets').value);
+  const presetSelect = document.getElementById('timer-presets');
+  timeLeft = presetSelect ? parseInt(presetSelect.value) : 1500;
   updateTimerDisplay();
-  document.getElementById('timer-start').textContent = 'Initiate Focus';
+  const startBtn = document.getElementById('timer-start');
+  if (startBtn) startBtn.textContent = 'Initiate Focus';
   showToast('Timer reset', 'info');
 }
 
@@ -948,7 +1017,7 @@ function showToast(message, type = 'info') {
   const toastTitle = document.getElementById('toast-title');
   const toastMessage = document.getElementById('toast-message');
   
-  if (!toast) return;
+  if (!toast || !toastTitle || !toastMessage) return;
   
   // Set type
   toast.className = 'toast';
@@ -992,14 +1061,18 @@ function setupKeyboardShortcuts() {
     // Ctrl+N for new task
     if (e.ctrlKey && e.key === 'n') {
       e.preventDefault();
-      document.getElementById('taskTitle').focus();
+      const taskTitle = document.getElementById('taskTitle');
+      if (taskTitle) taskTitle.focus();
     }
     
     // Ctrl+Enter to save
     if (e.ctrlKey && e.key === 'Enter') {
-      if (document.getElementById('taskTitle').value) {
+      const taskTitle = document.getElementById('taskTitle');
+      const noteContent = document.getElementById('noteContent');
+      
+      if (taskTitle && taskTitle.value) {
         addTask();
-      } else if (document.getElementById('noteContent').value) {
+      } else if (noteContent && noteContent.value) {
         saveNote();
       }
     }
@@ -1008,7 +1081,8 @@ function setupKeyboardShortcuts() {
     if (e.ctrlKey && e.key === 'f') {
       e.preventDefault();
       switchView('focus');
-      document.getElementById('timer-start').focus();
+      const timerStart = document.getElementById('timer-start');
+      if (timerStart) timerStart.focus();
     }
     
     // Ctrl+T for theme toggle
@@ -1064,13 +1138,7 @@ async function logout() {
     notes = [];
     
     // Reset UI
-    document.getElementById('app-content').style.display = 'none';
-    document.getElementById('auth-screen').style.display = 'flex';
-    
-    // Reset auth form
-    document.getElementById('auth-email').value = '';
-    document.getElementById('auth-pass').value = '';
-    document.getElementById('auth-name').value = '';
+    showAuth();
     
     showToast('Logged out successfully', 'success');
   }
@@ -1078,11 +1146,13 @@ async function logout() {
 
 // 25. Modal Functions
 function showKeyboardShortcutsModal() {
-  document.getElementById('shortcuts-modal').classList.add('show');
+  const modal = document.getElementById('shortcuts-modal');
+  if (modal) modal.classList.add('show');
 }
 
 function closeShortcutsModal() {
-  document.getElementById('shortcuts-modal').classList.remove('show');
+  const modal = document.getElementById('shortcuts-modal');
+  if (modal) modal.classList.remove('show');
 }
 
 // 26. Export Data Function
@@ -1141,7 +1211,8 @@ function wipeData() {
 function showLoading(message = 'Syncing...') {
   const overlay = document.getElementById('loading-overlay');
   if (overlay) {
-    overlay.querySelector('p').textContent = message;
+    const p = overlay.querySelector('p');
+    if (p) p.textContent = message;
     overlay.style.display = 'flex';
   }
 }
@@ -1153,7 +1224,7 @@ function hideLoading() {
   }
 }
 
-// 29. Make all functions globally available
+// ✅✅✅ CRITICAL FIX: Make all functions globally available
 window.handleAuth = handleAuth;
 window.toggleAuthMode = toggleAuthMode;
 window.logout = logout;
@@ -1176,4 +1247,7 @@ window.showLoading = showLoading;
 window.hideLoading = hideLoading;
 window.hideToast = hideToast;
 
-// ✅ END OF SCRIPT
+console.log('✅ All functions are now globally available');
+console.log('🔍 handleAuth available?', typeof window.handleAuth);
+console.log('🔍 toggleAuthMode available?', typeof window.toggleAuthMode);
+console.log('🚀 Zenith X Pro Script Loaded Successfully');
