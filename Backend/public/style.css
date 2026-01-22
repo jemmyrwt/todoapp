@@ -177,7 +177,12 @@ body {
 }
 
 .auth-extra-field {
+    display: none;
     margin-bottom: 15px;
+}
+
+.auth-extra-field.show {
+    display: block;
     animation: slideDown 0.3s ease;
 }
 
