@@ -1,4 +1,4 @@
-/* --- ZENITH X PRO | ENHANCED VERSION (V7.1) --- */
+/* --- TASKCONTROLLER | ENHANCED VERSION (V8.0) --- */
 :root {
     --p: #6366f1;
     --p-light: #818cf8;
@@ -393,10 +393,7 @@ body {
     margin-top: auto;
 }
 
-.switch-account-btn {
-    background: rgba(59, 130, 246, 0.1);
-    color: var(--info);
-    border: 1px solid var(--info);
+.switch-account-btn, .logout-btn {
     padding: 14px;
     border-radius: var(--radius-md);
     cursor: pointer;
@@ -407,6 +404,13 @@ body {
     font-weight: 600;
     transition: var(--transition);
     font-size: 14px;
+    border: 1px solid transparent;
+}
+
+.switch-account-btn {
+    background: rgba(59, 130, 246, 0.1);
+    color: var(--info);
+    border-color: var(--info);
 }
 
 .switch-account-btn:hover {
@@ -418,17 +422,7 @@ body {
 .logout-btn {
     background: rgba(239, 68, 68, 0.1);
     color: var(--danger);
-    border: 1px solid var(--danger);
-    padding: 14px;
-    border-radius: var(--radius-md);
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    font-weight: 600;
-    transition: var(--transition);
-    font-size: 14px;
+    border-color: var(--danger);
 }
 
 .logout-btn:hover {
@@ -515,7 +509,7 @@ body {
     transform: translateY(-2px);
 }
 
-/* TASK CREATOR */
+/* TASK CREATOR - FIXED ALIGNMENT */
 .task-creator {
     background: var(--card);
     padding: 30px;
@@ -549,6 +543,8 @@ body {
     display: flex;
     gap: 15px;
     margin-bottom: 20px;
+    align-items: stretch;
+    min-height: 60px;
 }
 
 #taskTitle {
@@ -561,6 +557,8 @@ body {
     font-size: 16px;
     transition: var(--transition);
     outline: none;
+    min-height: 60px;
+    height: auto;
 }
 
 [data-theme="light"] #taskTitle {
@@ -575,6 +573,7 @@ body {
 
 #addBtn {
     width: 60px;
+    min-width: 60px;
     height: 60px;
     background: linear-gradient(135deg, var(--p), var(--accent));
     border-radius: var(--radius-md);
@@ -588,6 +587,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
+    flex-shrink: 0;
 }
 
 #addBtn::after {
@@ -609,7 +609,7 @@ body {
 }
 
 #addBtn:hover {
-    transform: scale(1.05) rotate(90deg);
+    transform: scale(1.05);
     box-shadow: 0 5px 20px rgba(99, 102, 241, 0.4);
 }
 
@@ -633,6 +633,7 @@ body {
     cursor: pointer;
     transition: var(--transition);
     outline: none;
+    height: 48px;
 }
 
 [data-theme="light"] .meta-row select,
@@ -1002,7 +1003,7 @@ body {
     box-shadow: var(--shadow-light);
 }
 
-/* FOCUS TIMER - REDESIGNED */
+/* FOCUS TIMER - FIXED UI */
 .focus-box {
     background: var(--card);
     padding: 50px;
@@ -1196,6 +1197,8 @@ body {
 
 .timer-presets {
     margin-bottom: 30px;
+    display: flex;
+    justify-content: center;
 }
 
 #timer-presets {
@@ -1210,6 +1213,11 @@ body {
     font-size: 1rem;
     transition: var(--transition);
     outline: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 1rem center;
+    background-size: 1em;
 }
 
 #timer-presets:hover {
@@ -1247,7 +1255,7 @@ body {
     font-size: 1.5rem;
 }
 
-/* NOTES */
+/* NOTES - FIXED RESPONSIVE */
 .note-creator {
     background: var(--card);
     padding: 30px;
@@ -1288,6 +1296,7 @@ body {
     justify-content: flex-end;
     gap: 15px;
     margin-top: 20px;
+    flex-wrap: wrap;
 }
 
 .notes-grid {
@@ -1616,6 +1625,7 @@ body {
     display: flex;
     gap: 15px;
     justify-content: center;
+    flex-wrap: wrap;
 }
 
 .modal-actions button {
@@ -1976,6 +1986,8 @@ body {
 
     #live-clock {
         align-self: flex-start;
+        width: 100%;
+        text-align: center;
     }
 
     .mobile-nav {
@@ -1991,10 +2003,12 @@ body {
     .btn-danger {
         min-width: 140px;
         padding: 15px 25px;
+        width: 100%;
     }
 
     .focus-box {
         padding: 30px;
+        margin: 0 10px;
     }
     
     .stats-grid {
@@ -2013,6 +2027,25 @@ body {
     
     .modal-content {
         width: 95%;
+        margin: 10px;
+    }
+    
+    .note-controls {
+        justify-content: center;
+    }
+    
+    .note-controls button {
+        width: 100%;
+    }
+    
+    .timer-controls {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .timer-controls button {
+        width: 100%;
+        max-width: 300px;
     }
 }
 
@@ -2037,6 +2070,7 @@ body {
 
     .input-row {
         flex-direction: column;
+        gap: 10px;
     }
 
     #addBtn {
@@ -2091,5 +2125,22 @@ body {
     
     .notes-grid {
         grid-template-columns: 1fr;
+    }
+    
+    .timer-presets {
+        width: 100%;
+    }
+    
+    #timer-presets {
+        max-width: none;
+    }
+    
+    .timer-stats {
+        flex-direction: column;
+        gap: 20px;
+    }
+    
+    .stat-item {
+        min-width: auto;
     }
 }
