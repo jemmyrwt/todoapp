@@ -2,7 +2,6 @@ const jwt = require('jsonwebtoken');
 
 const authMiddleware = async (req, res, next) => {
   try {
-    // Get token from header
     const token = req.header('Authorization')?.replace('Bearer ', '');
     
     console.log('🔐 Token received:', token ? 'Yes' : 'No');
@@ -14,12 +13,10 @@ const authMiddleware = async (req, res, next) => {
       });
     }
 
-    // ✅ FIXED: Using same secret as User.js
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'jaimin_elite_786');
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'taskcontroller_secret_786');
     
     console.log('✅ Token decoded:', decoded);
     
-    // Check if decoded has userId
     if (!decoded.userId) {
       return res.status(401).json({
         success: false,
@@ -37,7 +34,6 @@ const authMiddleware = async (req, res, next) => {
   } catch (error) {
     console.error('🔴 Auth middleware error:', error.message);
     
-    // Specific error handling
     if (error.name === 'TokenExpiredError') {
       return res.status(401).json({
         success: false,
@@ -52,7 +48,6 @@ const authMiddleware = async (req, res, next) => {
       });
     }
     
-    // Generic error
     res.status(401).json({
       success: false,
       message: 'Authentication failed'
