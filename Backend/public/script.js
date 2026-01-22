@@ -6,7 +6,7 @@ const API_BASE_URL = window.location.origin.includes('render.com')
 console.log('🌐 TaskController Loading...');
 console.log('📡 API Base URL:', API_BASE_URL);
 console.log('🌍 Current Origin:', window.location.origin);
-console.log('🔍 Environment:');
+console.log('🔍 Environment: Broweser ');
 
 let tasks = [];
 let notes = [];
@@ -268,7 +268,7 @@ async function handleAuth() {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Accept': 'application/json',
+                'Accept': 'application/json'
             
             },
             body: JSON.stringify(body),
@@ -463,16 +463,15 @@ function updateNetworkStatus() {
 function setupEventListeners() {
     console.log('🔧 Setting up event listeners...');
     
-    // ✅ FIXED: AUTH BUTTON EVENT LISTENER - PROPER BINDING
-    const authBtn = document.getElementById('auth-main-btn');
-    if (authBtn) {
-        console.log('✅ Auth button found, adding event listener');
-        // Remove any existing listeners
-        const newAuthBtn = document.getElementById('auth-main-btn');
-        newAuthBtn.addEventListener('click', handleAuth);
-    } else {
-        console.log('❌ Auth button not found!');
-    }
+    
+    // ✅ FIXED: AUTH BUTTON EVENT LISTENER - SINGLE & SAFE
+const authBtn = document.getElementById('auth-main-btn');
+if (authBtn) {
+    console.log('✅ Auth button found, binding click');
+    authBtn.onclick = handleAuth; // ONLY THIS
+} else {
+    console.log('❌ Auth button not found!');
+}
     
     // ✅ FIXED: AUTH TOGGLE LINK
     const toggleAuthLink = document.querySelector('.toggle-auth');
