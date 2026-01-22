@@ -1,23 +1,23 @@
 const jwt = require('jsonwebtoken');
 
-// ✅ FIXED: Jaimin ka original JWT secret
+// ✅ Jaimin's JWT Secret
 const JWT_SECRET = process.env.JWT_SECRET || 'jaimin_elite_786';
 
 console.log('🔐 Auth Middleware Loaded');
-console.log('🔑 JWT Secret:', JWT_SECRET);
 
 const authMiddleware = async (req, res, next) => {
     try {
+        // Skip authentication for public routes
+        const publicRoutes = ['/api/auth/register', '/api/auth/login', '/api/auth/check-email', '/api/health'];
+        if (publicRoutes.includes(req.path)) {
+            console.log(`✅ Skipping auth for public route: ${req.path}`);
+            return next();
+        }
+
         // Get token from header
-        const token = req.header('Authorization')?.replace('Bearer ', '');
+        const authHeader = req.headers.authorization || req.headers.Authorization;
         
-        console.log('🔐 Auth middleware check:');
-        console.log('   - Token received:', token ? `Yes (${token.substring(0, 20)}...)` : 'No');
-        console.log('   - Request path:', req.path);
-        console.log('   - Request method:', req.method);
-        
-        if (!token) {
-            console.log('❌ No token provided');
+        if (!authHeader) {
             return res.status(401).json({
                 success: false,
                 message: 'No authentication token provided',
@@ -25,71 +25,74 @@ const authMiddleware = async (req, res, next) => {
             });
         }
 
-        // ✅ FIXED: Jaimin ke JWT secret se token verify
-        console.log('🔐 Verifying token with jaimin_elite_786...');
-        const decoded = jwt.verify(token, JWT_SECRET);
-        
-        console.log('✅ Token decoded successfully:');
-        console.log('   - User ID:', decoded.userId);
-        console.log('   - User email:', decoded.email);
-        console.log('   - Expires:', new Date(decoded.exp * 1000).toISOString());
-        
-        // Check if decoded has userId
-        if (!decoded.userId) {
-            console.log('❌ Invalid token structure - missing userId');
+        // Extract token from "Bearer <token>"
+        const token = authHeader.startsWith('Bearer ') 
+            ? authHeader.slice(7).trim() 
+            : authHeader.trim();
+
+        if (!token || token === 'null' || token === 'undefined') {
             return res.status(401).json({
                 success: false,
-                message: 'Invalid token structure',
-                error: 'INVALID_TOKEN_STRUCTURE'
+                message: 'Invalid token format',
+                error: 'INVALID_TOKEN_FORMAT'
             });
         }
+
+        // Verify token
+        const decoded = jwt.verify(token, JWT_SECRET);
         
-        // Check token expiration
-        const currentTime = Math.floor(Date.now() / 1000);
-        if (decoded.exp && decoded.exp < currentTime) {
-            console.log('❌ Token expired');
+        // Validate decoded token
+        if (!decoded || !decoded.userId || !decoded.email) {
             return res.status(401).json({
                 success: false,
-                message: 'Authentication token expired',
+                message: 'Invalid token payload',
+                error: 'INVALID_TOKEN_PAYLOAD'
+            });
+        }
+
+        // Check token expiration
+        if (decoded.exp && decoded.exp * 1000 < Date.now()) {
+            return res.status(401).json({
+                success: false,
+                message: 'Token expired',
                 error: 'TOKEN_EXPIRED'
             });
         }
-        
+
         // Attach user info to request
+        req.user = {
+            id: decoded.userId,
+            email: decoded.email,
+            name: decoded.name || 'User'
+        };
+
         req.userId = decoded.userId;
         req.userEmail = decoded.email;
-        req.userName = decoded.name;
-        
-        console.log(`✅ Authenticated user: ${decoded.email} (${decoded.userId})`);
+        req.userName = decoded.name || 'User';
+
+        console.log(`✅ Authenticated: ${req.userEmail} (${req.userId})`);
         next();
         
     } catch (error) {
-        console.error('🔴 Auth middleware error:', error.message);
-        console.error('🔴 Error name:', error.name);
-        console.error('🔴 Error stack:', error.stack);
+        console.error('🔴 Auth Error:', error.message);
         
-        // Specific error handling
         if (error.name === 'TokenExpiredError') {
-            console.log('❌ Token expired error');
             return res.status(401).json({
                 success: false,
-                message: 'Authentication token expired, please login again',
-                error: 'TOKEN_EXPIRED'
+                message: 'Session expired. Please login again.',
+                error: 'SESSION_EXPIRED'
             });
         }
         
         if (error.name === 'JsonWebTokenError') {
-            console.log('❌ Invalid token error');
             return res.status(401).json({
                 success: false,
-                message: 'Invalid authentication token',
-                error: 'INVALID_TOKEN'
+                message: 'Invalid session. Please login again.',
+                error: 'INVALID_SESSION'
             });
         }
         
-        // Generic error
-        console.log('❌ Generic auth error');
-        res.status(401).json({
+        res.status(500).json({
             success: false,
             message: 'Authentication failed',
             error: 'AUTH_FAILED'
@@ -97,11 +100,12 @@ const authMiddleware = async (req, res, next) => {
     }
 };
 
-// Test middleware for debugging
+// Test middleware (optional)
 const testAuth = (req, res, next) => {
-    console.log('🔍 Test middleware - Headers:', req.headers);
-    console.log('🔍 Test middleware - Original URL:', req.originalUrl);
+    console.log(`🔍 ${req.method} ${req.path}`);
     next();
 };
 
-module.exports = { authMiddleware, testAuth };
+module.exports = authMiddleware; // ✅ Single export
+// OR if you need both:
+// module.exports = { authMiddleware, testAuth };
