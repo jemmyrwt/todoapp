@@ -100,5 +100,6 @@ const authMiddleware = async (req, res, next) => {
     }
 };
 
-// Export as object (for destructuring) - ADD THIS
-module.exports = { authMiddleware };
+// Export as both default and named for compatibility
+module.exports = authMiddleware;
+module.exports.authMiddleware = authMiddleware; // Extra export for compatibility
