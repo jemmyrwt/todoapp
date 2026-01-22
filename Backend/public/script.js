@@ -415,10 +415,20 @@ function updateAuthUI() {
 
 // 4. Toggle Auth Mode Function
 function toggleAuthMode() {
-    console.log('🔄 toggleAuthMode() called');
-    
     isLoginMode = !isLoginMode;
+
+    const regExtra = document.getElementById('reg-extra');
+
+    if (!isLoginMode) {
+        // Create Account mode
+        regExtra.classList.add('show');
+    } else {
+        // Login mode
+        regExtra.classList.remove('show');
+    }
+
     updateAuthUI();
+}
     
     // Clear inputs
     if (document.getElementById('auth-name')) {
