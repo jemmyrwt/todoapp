@@ -54,18 +54,14 @@ const todoSchema = new mongoose.Schema({
   }],
   
   estimatedTime: {
-    type: Number, // in minutes
+    type: Number,
     default: 0
   },
   
   actualTime: {
-    type: Number, // in minutes
+    type: Number,
     default: 0
   },
-  
-  reminders: [{
-    type: Date
-  }],
   
   isArchived: {
     type: Boolean,
@@ -83,13 +79,11 @@ const todoSchema = new mongoose.Schema({
   }
 });
 
-// Update updatedAt on save
 todoSchema.pre('save', function(next) {
   this.updatedAt = Date.now();
   next();
 });
 
-// Indexes for faster queries
 todoSchema.index({ userId: 1, isCompleted: 1 });
 todoSchema.index({ userId: 1, dueDate: 1 });
 todoSchema.index({ userId: 1, category: 1 });
