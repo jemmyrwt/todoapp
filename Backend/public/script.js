@@ -6,7 +6,7 @@ const API_BASE_URL = window.location.origin.includes('render.com')
 console.log('🌐 TaskController Loading...');
 console.log('📡 API Base URL:', API_BASE_URL);
 console.log('🌍 Current Origin:', window.location.origin);
-console.log('🔍 Environment:', process.env.NODE_ENV);
+console.log('🔍 Environment:');
 
 let tasks = [];
 let notes = [];
@@ -393,57 +393,39 @@ function updateAuthUI() {
         authDesc.textContent = 'Secure access to your dashboard';
         authMainBtn.textContent = 'Access Workspace';
         toggleTextSpan.textContent = 'Create Account';
-        if (authExtra) authExtra.style.display = 'none';
-        
-        // Check for auto-login data
-        const autoLogin = JSON.parse(localStorage.getItem(STORAGE_KEYS.AUTO_LOGIN));
-        if (autoLogin) {
-            setTimeout(() => {
-                document.getElementById('auth-email').value = autoLogin.email;
-                document.getElementById('auth-pass').value = autoLogin.password;
-                showToast('Auto-filled credentials from registration', 'info');
-            }, 100);
-        }
+        if (authExtra) authExtra.classList.remove('show');
     } else {
         authTitle.textContent = 'Create Account';
         authDesc.textContent = 'Join TaskController today';
         authMainBtn.textContent = 'Create Account';
         toggleTextSpan.textContent = 'Login';
-        if (authExtra) authExtra.style.display = 'block';
+        if (authExtra) authExtra.classList.add('show');
     }
 }
-
 // 4. Toggle Auth Mode Function
 function toggleAuthMode() {
     isLoginMode = !isLoginMode;
 
-    const regExtra = document.getElementById('reg-extra');
-
-    if (!isLoginMode) {
-        // Create Account mode
-        regExtra.classList.add('show');
-    } else {
-        // Login mode
-        regExtra.classList.remove('show');
-    }
-
-    updateAuthUI();
-}
-    
-    // Clear inputs
+    // Clear inputs safely
     if (document.getElementById('auth-name')) {
         document.getElementById('auth-name').value = '';
     }
     document.getElementById('auth-email').value = '';
     document.getElementById('auth-pass').value = '';
-    
-    // Focus on appropriate field
-    if (isLoginMode) {
-        document.getElementById('auth-email').focus();
-    } else {
-        document.getElementById('auth-name').focus();
-    }
+
+    updateAuthUI();
+
+    // Focus
+    setTimeout(() => {
+        if (isLoginMode) {
+            document.getElementById('auth-email').focus();
+        } else {
+            document.getElementById('auth-name').focus();
+        }
+    }, 50);
 }
+    
+    
 
 // 5. Network Status Function
 function updateNetworkStatus() {
@@ -487,7 +469,6 @@ function setupEventListeners() {
     if (authBtn) {
         console.log('✅ Auth button found, adding event listener');
         // Remove any existing listeners
-        authBtn.replaceWith(authBtn.cloneNode(true));
         const newAuthBtn = document.getElementById('auth-main-btn');
         newAuthBtn.addEventListener('click', handleAuth);
     } else {
