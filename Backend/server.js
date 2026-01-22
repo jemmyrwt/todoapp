@@ -14,26 +14,25 @@ const focusRoutes = require('./routes/focusRoutes');
 
 const app = express();
 
-// ✅ FIXED: CORS Configuration for mobile access
+// CORS Configuration
 app.use(cors({
-    origin: '*', // Allow all origins for mobile
+    origin: '*',
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
     credentials: true
 }));
 
-// Handle preflight requests
 app.options('*', cors());
 
 // Security middleware
 app.use(helmet({
-    contentSecurityPolicy: false // Temporarily disable for debugging
+    contentSecurityPolicy: false
 }));
 
 // Rate limiting
 const limiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // Limit each IP to 100 requests per windowMs
+    windowMs: 15 * 60 * 1000,
+    max: 100,
     message: 'Too many requests from this IP, please try again later.'
 });
 app.use('/api/', limiter);
@@ -43,7 +42,7 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Connect to MongoDB Atlas
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://jaiminravat:jaiminravat@todoclust0.g0maq65.mongodb.net/zenithDB?retryWrites=true&w=majority';
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://jaiminravat:jaiminravat@todoclust0.g0maq65.mongodb.net/TaskControllerDB?retryWrites=true&w=majority';
 
 console.log('🔗 Connecting to MongoDB Atlas...');
 
@@ -69,7 +68,7 @@ mongoose.connect(MONGODB_URI, {
     }, 5000);
 });
 
-// ✅ ADDED: Connection events with better logging
+// Connection events
 mongoose.connection.on('error', err => {
     console.error('❌ MongoDB Error:', err.message);
 });
@@ -82,13 +81,13 @@ mongoose.connection.on('reconnected', () => {
     console.log('✅ MongoDB reconnected');
 });
 
-// ✅ ADDED: Log all incoming requests for debugging
+// Log all incoming requests
 app.use((req, res, next) => {
     console.log(`${new Date().toISOString()} ${req.method} ${req.url}`);
     next();
 });
 
-// ✅ FIXED: API ROUTES MUST COME BEFORE STATIC FILES
+// API routes
 app.use('/api/auth', authRoutes);
 app.use('/api/todos', todoRoutes);
 app.use('/api/notes', noteRoutes);
@@ -104,10 +103,10 @@ app.get('/api/health', (req, res) => {
     });
 });
 
-// Serve static files - THIS COMES AFTER API ROUTES
+// Serve static files
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Serve index.html for all other routes (SPA support) - THIS COMES LAST
+// Serve index.html for all other routes (SPA support)
 app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
@@ -151,8 +150,8 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => {
-    console.log(`🚀 Zenith X Pro Server running on port ${PORT}`);
+    console.log(`🚀 TaskController Server running on port ${PORT}`);
     console.log(`🌐 Environment: ${process.env.NODE_ENV || 'development'}`);
-    console.log(`🔗 Server URL: https://todoapp-p5hq.onrender.com`);
-    console.log(`📡 API Base URL: https://todoapp-p5hq.onrender.com/api`);
+    console.log(`🔗 Server URL: http://localhost:${PORT}`);
+    console.log(`📡 API Base URL: http://localhost:${PORT}/api`);
 });
