@@ -100,12 +100,5 @@ const authMiddleware = async (req, res, next) => {
     }
 };
 
-// Test middleware (optional)
-const testAuth = (req, res, next) => {
-    console.log(`🔍 ${req.method} ${req.path}`);
-    next();
-};
-
-module.exports = authMiddleware; // ✅ Single export
-// OR if you need both:
-// module.exports = { authMiddleware, testAuth };
+// Export as object (for destructuring) - ADD THIS
+module.exports = { authMiddleware };
