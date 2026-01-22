@@ -272,7 +272,6 @@ async function handleAuth() {
                 'Origin': window.location.origin
             },
             body: JSON.stringify(body),
-            credentials: 'include'
         });
 
         console.log('📥 Auth response status:', response.status, response.statusText);
