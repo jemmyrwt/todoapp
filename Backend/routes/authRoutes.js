@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const authController = require('../controllers/authController');
-const { authMiddleware } = require('../middleware/authMiddleware');
+const authMiddleware = require('../middleware/authMiddleware'); // Remove destructuring
 
 // ✅ FIXED: Add test route for debugging
 router.get('/test', (req, res) => {
@@ -19,7 +19,7 @@ router.post('/logout', authController.logout);
 router.post('/check-email', authController.checkEmail);
 
 // Protected routes
-router.get('/me', authMiddleware, authController.getMe);
+router.get('/me', authMiddleware, authController.getMe); // Use directly
 router.put('/settings', authMiddleware, authController.updateSettings);
 router.put('/profile', authMiddleware, authController.updateProfile);
 router.put('/change-password', authMiddleware, authController.changePassword);
