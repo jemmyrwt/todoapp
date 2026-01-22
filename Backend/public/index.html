@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>RadheOS | Premium Productivity</title>
+    <title>TaskController | Premium Productivity</title>
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -14,7 +14,7 @@
     <div id="auth-screen" class="auth-overlay">
         <div class="auth-card">
             <div class="auth-logo"><i class="fas fa-bolt"></i></div>
-            <h2 id="auth-title">RadheOS</h2>
+            <h2 id="auth-title">TaskController</h2>
             <p id="auth-desc">Secure access to your dashboard</p>
             
             <div id="reg-extra" class="auth-extra-field" style="display: none;">
@@ -27,7 +27,7 @@
             <button id="auth-main-btn" onclick="handleAuth()">Access Workspace</button>
             
             <p class="toggle-auth" onclick="toggleAuthMode()">
-                New to RadheOS? <span id="toggle-text-span">Create Account</span>
+                New to TaskController? <span id="toggle-text-span">Create Account</span>
             </p>
         </div>
     </div>
@@ -37,7 +37,7 @@
         <aside class="sidebar">
             <div class="logo">
                 <div class="logo-box"><i class="fas fa-bolt"></i></div>
-                <span id="logo-text">RadheOS</span>
+                <span id="logo-text">TaskController</span>
             </div>
             <nav class="side-nav">
                 <div class="nav-btn active" data-view="tasks"><i class="fas fa-list-check"></i> Tasks</div>
@@ -211,7 +211,7 @@
                             <p>Switch between Dark and Light mode</p>
                         </div>
                         <div class="toggle-switch">
-                            <input type="checkbox" id="themeToggle" onchange="toggleTheme()">
+                            <input type="checkbox" id="themeToggle">
                             <label for="themeToggle"></label>
                         </div>
                     </div>
@@ -221,7 +221,7 @@
                             <p>Enable/disable timer completion sound</p>
                         </div>
                         <div class="toggle-switch">
-                            <input type="checkbox" id="soundToggle">
+                            <input type="checkbox" id="soundToggle" checked>
                             <label for="soundToggle"></label>
                         </div>
                     </div>
@@ -261,9 +261,9 @@
                     </div>
                 </div>
                 <div class="about-section">
-                    <h3>About RadheOS</h3>
-                    <p>Version 7.0 | Premium Productivity Suite</p>
-                    <p>© 2026 RadheOS Technologies. All rights reserved.</p>
+                    <h3>About TaskController</h3>
+                    <p>Version 8.0 | Premium Productivity Suite</p>
+                    <p>© 2026 TaskController Technologies. All rights reserved.</p>
                     <div class="shortcuts-btn">
                         <button class="btn-outline" onclick="showKeyboardShortcutsModal()">
                             <i class="fas fa-keyboard"></i> Keyboard Shortcuts
@@ -374,17 +374,6 @@
                 </div>
             </div>
         </div>
-
-        <!-- AUDIO ELEMENTS -->
-        <audio id="task-sound" preload="auto">
-            <source src="https://assets.mixkit.co/sfx/preview/mixkit-select-click-1109.mp3" type="audio/mpeg">
-        </audio>
-        <audio id="timer-sound" preload="auto">
-            <source src="https://assets.mixkit.co/sfx/preview/mixkit-alarm-digital-clock-beep-989.mp3" type="audio/mpeg">
-        </audio>
-        <audio id="notification-sound" preload="auto">
-            <source src="https://assets.mixkit.co/sfx/preview/mixkit-correct-answer-tone-2870.mp3" type="audio/mpeg">
-        </audio>
     </div>
 
     <!-- Network Status Indicator -->
