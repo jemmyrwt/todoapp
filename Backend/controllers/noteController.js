@@ -1,8 +1,5 @@
 const Note = require('../models/Note');
 
-// @desc    Get all notes
-// @route   GET /api/notes
-// @access  Private
 exports.getNotes = async (req, res) => {
     try {
         const { 
@@ -15,10 +12,8 @@ exports.getNotes = async (req, res) => {
             limit = 50 
         } = req.query;
 
-        // Build query
         let query = { userId: req.userId };
 
-        // Apply filters
         if (category && category !== 'all') {
             query.category = category;
         }
@@ -31,7 +26,6 @@ exports.getNotes = async (req, res) => {
             query.isArchived = archived === 'true';
         }
 
-        // Search
         if (search) {
             query.$or = [
                 { title: { $regex: search, $options: 'i' } },
@@ -40,7 +34,6 @@ exports.getNotes = async (req, res) => {
             ];
         }
 
-        // Execute query with pagination
         const skip = (page - 1) * limit;
         
         const notes = await Note.find(query)
@@ -68,9 +61,6 @@ exports.getNotes = async (req, res) => {
     }
 };
 
-// @desc    Get single note
-// @route   GET /api/notes/:id
-// @access  Private
 exports.getNote = async (req, res) => {
     try {
         const note = await Note.findOne({
@@ -99,9 +89,6 @@ exports.getNote = async (req, res) => {
     }
 };
 
-// @desc    Create note
-// @route   POST /api/notes
-// @access  Private
 exports.createNote = async (req, res) => {
     try {
         const {
@@ -113,7 +100,6 @@ exports.createNote = async (req, res) => {
             isPinned
         } = req.body;
 
-        // Validate required fields
         if (!content) {
             return res.status(400).json({
                 success: false,
@@ -146,9 +132,6 @@ exports.createNote = async (req, res) => {
     }
 };
 
-// @desc    Update note
-// @route   PUT /api/notes/:id
-// @access  Private
 exports.updateNote = async (req, res) => {
     try {
         let note = await Note.findOne({
@@ -163,7 +146,6 @@ exports.updateNote = async (req, res) => {
             });
         }
 
-        // Update fields
         const updateFields = ['title', 'content', 'category', 'tags', 'color', 'isPinned', 'isArchived'];
         
         updateFields.forEach(field => {
@@ -189,9 +171,6 @@ exports.updateNote = async (req, res) => {
     }
 };
 
-// @desc    Delete note
-// @route   DELETE /api/notes/:id
-// @access  Private
 exports.deleteNote = async (req, res) => {
     try {
         const note = await Note.findOneAndDelete({
@@ -220,9 +199,6 @@ exports.deleteNote = async (req, res) => {
     }
 };
 
-// @desc    Search notes
-// @route   GET /api/notes/search/:query
-// @access  Private
 exports.searchNotes = async (req, res) => {
     try {
         const { query } = req.params;
