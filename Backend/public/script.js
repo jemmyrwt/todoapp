@@ -269,7 +269,7 @@ async function handleAuth() {
             headers: {
                 'Content-Type': 'application/json',
                 'Accept': 'application/json',
-                'Origin': window.location.origin
+            
             },
             body: JSON.stringify(body),
         });
