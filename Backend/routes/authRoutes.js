@@ -6,9 +6,8 @@ const authMiddleware = require('../middleware/authMiddleware');
 // Public routes
 router.post('/register', authController.register);
 router.post('/login', authController.login);
-
-// ✅ REMOVE authMiddleware from logout (logout public hona chahiye)
-router.post('/logout', authController.logout); // ❌ authMiddleware hata do
+router.post('/logout', authController.logout);
+router.post('/check-email', authController.checkEmail);
 
 // Protected routes
 router.get('/me', authMiddleware, authController.getMe);
