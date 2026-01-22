@@ -80,16 +80,38 @@ const userSchema = new mongoose.Schema({
     default: Date.now
   }
 }, {
-  timestamps: true
+  timestamps: true,
+  toJSON: {
+    transform: function(doc, ret) {
+      delete ret.password;
+      delete ret.verificationToken;
+      delete ret.resetPasswordToken;
+      delete ret.resetPasswordExpire;
+      delete ret.__v;
+      return ret;
+    }
+  },
+  toObject: {
+    transform: function(doc, ret) {
+      delete ret.password;
+      delete ret.verificationToken;
+      delete ret.resetPasswordToken;
+      delete ret.resetPasswordExpire;
+      delete ret.__v;
+      return ret;
+    }
+  }
 });
 
-// Hash password before saving
+// ✅✅✅ FIXED: Hash password before saving (AUTOMATIC)
 userSchema.pre('save', async function(next) {
+  // Only hash the password if it has been modified (or is new)
   if (!this.isModified('password')) return next();
   
   try {
     const salt = await bcrypt.genSalt(12);
     this.password = await bcrypt.hash(this.password, salt);
+    console.log('🔐 Password hashed automatically for:', this.email);
     next();
   } catch (error) {
     next(error);
@@ -98,7 +120,12 @@ userSchema.pre('save', async function(next) {
 
 // Compare password method
 userSchema.methods.comparePassword = async function(candidatePassword) {
-  return await bcrypt.compare(candidatePassword, this.password);
+  try {
+    return await bcrypt.compare(candidatePassword, this.password);
+  } catch (error) {
+    console.error('Password comparison error:', error);
+    return false;
+  }
 };
 
 // ✅ FIXED: Generate JWT token with correct secret
@@ -126,6 +153,12 @@ userSchema.methods.generatePasswordResetToken = function() {
   this.resetPasswordExpire = Date.now() + 10 * 60 * 1000; // 10 minutes
   
   return resetToken;
+};
+
+// ✅ ADDED: Update last active timestamp
+userSchema.methods.updateLastActive = async function() {
+  this.lastActive = Date.now();
+  await this.save();
 };
 
 module.exports = mongoose.model('User', userSchema);
