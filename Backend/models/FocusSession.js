@@ -8,7 +8,7 @@ const focusSessionSchema = new mongoose.Schema({
   },
   
   duration: {
-    type: Number, // in seconds
+    type: Number,
     required: true
   },
   
@@ -56,12 +56,10 @@ const focusSessionSchema = new mongoose.Schema({
   }
 });
 
-// Virtual for session length in minutes
 focusSessionSchema.virtual('durationMinutes').get(function() {
   return Math.floor(this.duration / 60);
 });
 
-// Indexes
 focusSessionSchema.index({ userId: 1, startTime: -1 });
 focusSessionSchema.index({ userId: 1, mode: 1 });
 
