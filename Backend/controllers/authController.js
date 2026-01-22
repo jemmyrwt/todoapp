@@ -322,7 +322,9 @@ exports.changePassword = async (req, res) => {
   }
 };
 
-// ✅ ADDED: Check email availability
+// @desc    Check email availability
+// @route   POST /api/auth/check-email
+// @access  Public
 exports.checkEmail = async (req, res) => {
   try {
     const { email } = req.body;
@@ -350,7 +352,9 @@ exports.checkEmail = async (req, res) => {
   }
 };
 
-// ✅ ADDED: Logout
+// @desc    Logout user
+// @route   POST /api/auth/logout
+// @access  Public
 exports.logout = async (req, res) => {
   try {
     res.json({
