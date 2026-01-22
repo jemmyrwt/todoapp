@@ -57,7 +57,6 @@ const noteSchema = new mongoose.Schema({
   }
 });
 
-// Update updatedAt on save
 noteSchema.pre('save', function(next) {
   this.updatedAt = Date.now();
   next();
