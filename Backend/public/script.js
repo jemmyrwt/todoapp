@@ -2,7 +2,7 @@
 // ✅ FIXED: All auth functions are now globally available
 const API_BASE_URL = 'https://todoapp-p5hq.onrender.com/api';
 
-console.log('🌐 Zenith X Pro Loading...');
+console.log('🌐 RadheOS Loading...');
 console.log('📡 API Base URL:', API_BASE_URL);
 
 let tasks = [];
@@ -23,7 +23,7 @@ let isOnline = navigator.onLine;
 
 // 1. Initial Launch
 window.onload = async () => {
-  console.log('🌐 Zenith X Pro Loading...');
+  console.log('🌐 RadheOS Loading...');
   
   // Check network status
   updateNetworkStatus();
