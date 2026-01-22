@@ -103,9 +103,8 @@ const userSchema = new mongoose.Schema({
   }
 });
 
-// ✅✅✅ FIXED: Hash password before saving (AUTOMATIC)
+// Hash password before saving
 userSchema.pre('save', async function(next) {
-  // Only hash the password if it has been modified (or is new)
   if (!this.isModified('password')) return next();
   
   try {
@@ -128,7 +127,7 @@ userSchema.methods.comparePassword = async function(candidatePassword) {
   }
 };
 
-// ✅ FIXED: Generate JWT token with correct secret
+// Generate JWT token
 userSchema.methods.generateAuthToken = function() {
   return jwt.sign(
     { 
@@ -136,7 +135,7 @@ userSchema.methods.generateAuthToken = function() {
       email: this.email,
       name: this.name 
     },
-    process.env.JWT_SECRET || 'jaimin_elite_786', // ✅ Same as middleware
+    process.env.JWT_SECRET || 'taskcontroller_secret_786',
     { expiresIn: '7d' }
   );
 };
@@ -150,7 +149,7 @@ userSchema.methods.generatePasswordResetToken = function() {
     .update(resetToken)
     .digest('hex');
     
-  this.resetPasswordExpire = Date.now() + 10 * 60 * 1000; // 10 minutes
+  this.resetPasswordExpire = Date.now() + 10 * 60 * 1000;
   
   return resetToken;
 };
