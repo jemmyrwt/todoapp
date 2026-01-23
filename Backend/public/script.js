@@ -1,8 +1,7 @@
 // TaskController - Fixed Authentication for Render
-const API_BASE_URL = window.location.origin.includes('render.com') 
-    ? 'https://todoapp-p5hq.onrender.com/api' 
-    : 'http://localhost:10000/api';
-
+const API_BASE_URL = window.location.hostname === 'localhost'
+        ? 'http://localhost:10000/api'
+        : 'https://todoapp-p5hq.onrender.com/api';
 console.log('🌐 TaskController Loading...');
 console.log('📡 API Base URL:', API_BASE_URL);
 console.log('🌍 Current Origin:', window.location.origin);
