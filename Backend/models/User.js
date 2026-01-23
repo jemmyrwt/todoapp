@@ -8,7 +8,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'jaimin_elite_786';
 const JWT_EXPIRES_IN = '7d';
 
 console.log('👤 User Model Loaded');
-console.log('🔑 JWT Secret in User model:', JWT_SECRET);
+console.log('🔑 JWT Secret in User model:', JWT_SECRET ? 'SET' : 'MISSING');
 
 const userSchema = new mongoose.Schema({
     name: {
@@ -110,46 +110,82 @@ const userSchema = new mongoose.Schema({
     }
 });
 
-// Hash password before saving
+// ✅ FIXED: Hash password before saving
 userSchema.pre('save', async function(next) {
-    if (!this.isModified('password')) return next();
+    console.log('🔐 Pre-save middleware called for:', this.email);
+    
+    // Only hash the password if it has been modified (or is new)
+    if (!this.isModified('password')) {
+        console.log('   Password not modified, skipping hash');
+        return next();
+    }
     
     try {
+        console.log('   Hashing password for:', this.email);
         const salt = await bcrypt.genSalt(12);
         this.password = await bcrypt.hash(this.password, salt);
-        console.log('🔐 Password hashed for:', this.email);
+        console.log('   ✅ Password hashed successfully');
         next();
     } catch (error) {
+        console.error('   ❌ Password hashing error:', error);
         next(error);
     }
 });
 
-// Compare password method
+// ✅ FIXED: Compare password method - YEH IMPORTANT HAI!
 userSchema.methods.comparePassword = async function(candidatePassword) {
     try {
-        return await bcrypt.compare(candidatePassword, this.password);
+        console.log('🔑 Comparing password for:', this.email);
+        console.log('   Candidate password length:', candidatePassword ? candidatePassword.length : 0);
+        console.log('   Stored hash exists:', this.password ? 'YES' : 'NO');
+        
+        if (!this.password) {
+            console.log('   ❌ No password hash found for user');
+            return false;
+        }
+        
+        if (!candidatePassword) {
+            console.log('   ❌ No candidate password provided');
+            return false;
+        }
+        
+        // ✅ FIXED: Use bcrypt.compare properly
+        const isMatch = await bcrypt.compare(candidatePassword, this.password);
+        
+        console.log('   Password match result:', isMatch);
+        return isMatch;
+        
     } catch (error) {
-        console.error('Password comparison error:', error);
+        console.error('❌ Password comparison error:', error);
+        console.error('   Error details:', error.message);
         return false;
     }
 };
 
-// ✅ FIXED: Jaimin ke JWT secret se token generate
+// ✅ FIXED: Generate auth token
 userSchema.methods.generateAuthToken = function() {
-    const token = jwt.sign(
-        { 
-            userId: this._id, 
-            email: this.email,
-            name: this.name 
-        },
-        JWT_SECRET,
-        { expiresIn: JWT_EXPIRES_IN }
-    );
-    
-    console.log('🔐 Token generated for:', this.email);
-    console.log('   - Token (first 20 chars):', token.substring(0, 20) + '...');
-    
-    return token;
+    try {
+        console.log('🔐 Generating auth token for:', this.email);
+        
+        const token = jwt.sign(
+            { 
+                userId: this._id.toString(),
+                email: this.email,
+                name: this.name 
+            },
+            JWT_SECRET,
+            { expiresIn: JWT_EXPIRES_IN }
+        );
+        
+        console.log('   ✅ Token generated successfully');
+        console.log('   Token length:', token.length);
+        console.log('   Token first 20 chars:', token.substring(0, 20) + '...');
+        
+        return token;
+    } catch (error) {
+        console.error('❌ Token generation error:', error);
+        throw error;
+    }
 };
 
 // Generate password reset token
