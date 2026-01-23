@@ -565,13 +565,17 @@ if (authBtn) {
         });
     });
     
-    // Navigation
-    document.querySelectorAll('.nav-btn, .m-nav-item').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const view = this.dataset.view;
-            switchView(view);
-        });
+    
+    // Navigation (FIXED - only buttons with data-view)
+document.querySelectorAll('.nav-btn, .m-nav-item').forEach(btn => {
+    btn.addEventListener('click', function () {
+
+        // 🚫 Switch Account / Logout ke paas data-view nahi hota
+        if (!this.dataset.view) return;
+
+        switchView(this.dataset.view);
     });
+});
     
     // Timer controls
     const timerStartBtn = document.getElementById('timer-start');
