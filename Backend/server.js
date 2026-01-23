@@ -1,3 +1,4 @@
+
 require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
@@ -14,25 +15,30 @@ const focusRoutes = require('./routes/focusRoutes');
 
 const app = express();
 
-// ✅ FIXED: Enhanced CORS Configuration for Render
-app.use(cors({
+// ✅ FIXED: Enhanced CORS Configuration for Render with proper OPTIONS handling
+const corsOptions = {
     origin: [
         'https://todoapp-p5hq.onrender.com',
         'http://localhost:10000',
         'http://localhost:3000',
         'http://127.0.0.1:10000',
-        'http://127.0.0.1:3000'
+        'http://127.0.0.1:3000',
+        /\.onrender\.com$/ // Allow all Render subdomains
     ],
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
     allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Origin', 'X-Requested-With'],
     credentials: true,
     exposedHeaders: ['Authorization'],
+    optionsSuccessStatus: 200,
     preflightContinue: false,
-    optionsSuccessStatus: 204
-}));
+    maxAge: 86400 // 24 hours
+};
 
-// Handle preflight requests properly
-app.options('*', cors());
+// Apply CORS middleware
+app.use(cors(corsOptions));
+
+// ✅ FIXED: Explicit OPTIONS handler for preflight requests
+app.options('*', cors(corsOptions));
 
 // Security middleware
 app.use(helmet({
@@ -41,14 +47,15 @@ app.use(helmet({
     crossOriginResourcePolicy: { policy: "cross-origin" }
 }));
 
-// Rate limiting
+// Rate limiting with Render-specific adjustments
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000,
     max: 1000,
     message: 'Too many requests from this IP, please try again later.',
     standardHeaders: true,
     legacyHeaders: false,
-    skipSuccessfulRequests: false
+    skipSuccessfulRequests: false,
+    skip: (req) => req.method === 'OPTIONS' // Skip OPTIONS requests from rate limit
 });
 app.use('/api/', limiter);
 
@@ -56,37 +63,48 @@ app.use('/api/', limiter);
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// ✅ FIXED: MongoDB Connection with Render environment
+// ✅ FIXED: Add request timeout middleware (Render cold starts can be slow)
+app.use((req, res, next) => {
+    req.setTimeout(30000, () => { // 30 second timeout
+        console.log(`⏰ Request timeout: ${req.method} ${req.url}`);
+    });
+    res.setTimeout(30000);
+    next();
+});
+
+// ✅ FIXED: MongoDB Connection with retry logic
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://jaiminravat:jaiminravat@todoclust0.g0maq65.mongodb.net/TaskControllerDB?retryWrites=true&w=majority';
 
 console.log('🔗 Connecting to MongoDB Atlas...');
-console.log('🔑 Using MONGODB_URI:', MONGODB_URI ? 'Present' : 'Missing');
-console.log('🔑 JWT_SECRET:', process.env.JWT_SECRET ? 'Present' : 'Missing');
+console.log('🔑 MONGODB_URI:', MONGODB_URI ? '✓ Set' : '✗ Missing');
+console.log('🔑 JWT_SECRET:', process.env.JWT_SECRET ? '✓ Set' : '✗ Missing');
 
-mongoose.connect(MONGODB_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-    serverSelectionTimeoutMS: 30000,
-    socketTimeoutMS: 45000,
-    retryWrites: true,
-    w: 'majority'
-})
-.then(() => {
-    console.log('✅ MongoDB Atlas Connected Successfully');
-    console.log(`📊 Database: ${mongoose.connection.name}`);
-    console.log(`👤 Host: ${mongoose.connection.host}`);
-})
-.catch(err => {
-    console.error('❌ MongoDB Connection Error:', err.message);
-    console.error('❌ Error details:', err);
-    console.log('⚠️  Retrying connection in 10 seconds...');
-    setTimeout(() => {
-        mongoose.connect(MONGODB_URI, {
-            useNewUrlParser: true,
-            useUnifiedTopology: true,
-        });
-    }, 10000);
-});
+// Enhanced MongoDB connection with better error handling
+const connectWithRetry = () => {
+    mongoose.connect(MONGODB_URI, {
+        useNewUrlParser: true,
+        useUnifiedTopology: true,
+        serverSelectionTimeoutMS: 30000,
+        socketTimeoutMS: 45000,
+        retryWrites: true,
+        w: 'majority',
+        maxPoolSize: 10,
+        minPoolSize: 2,
+        heartbeatFrequencyMS: 10000
+    })
+    .then(() => {
+        console.log('✅ MongoDB Atlas Connected Successfully');
+        console.log(`📊 Database: ${mongoose.connection.name}`);
+        console.log(`👤 Host: ${mongoose.connection.host}`);
+    })
+    .catch(err => {
+        console.error('❌ MongoDB Connection Error:', err.message);
+        console.log('🔄 Retrying connection in 5 seconds...');
+        setTimeout(connectWithRetry, 5000);
+    });
+};
+
+connectWithRetry();
 
 // Connection events
 mongoose.connection.on('error', err => {
@@ -94,17 +112,28 @@ mongoose.connection.on('error', err => {
 });
 
 mongoose.connection.on('disconnected', () => {
-    console.log('⚠️  MongoDB disconnected');
+    console.log('⚠️  MongoDB disconnected - attempting to reconnect...');
+    setTimeout(connectWithRetry, 5000);
 });
 
 mongoose.connection.on('reconnected', () => {
     console.log('✅ MongoDB reconnected');
 });
 
-// Log all incoming requests
+// ✅ FIXED: Request logging with better formatting
 app.use((req, res, next) => {
-    console.log(`${new Date().toISOString()} ${req.method} ${req.url}`);
-    console.log('📡 Headers:', req.headers);
+    const start = Date.now();
+    const requestId = Math.random().toString(36).substring(7);
+    
+    console.log(`[${new Date().toISOString()}] ${requestId} ${req.method} ${req.url}`);
+    console.log(`   📡 Origin: ${req.headers.origin || 'None'}`);
+    console.log(`   🔑 Auth: ${req.headers.authorization ? 'Present' : 'None'}`);
+    
+    res.on('finish', () => {
+        const duration = Date.now() - start;
+        console.log(`[${new Date().toISOString()}] ${requestId} ${req.method} ${req.url} ${res.statusCode} ${duration}ms`);
+    });
+    
     next();
 });
 
@@ -114,24 +143,36 @@ app.use('/api/todos', todoRoutes);
 app.use('/api/notes', noteRoutes);
 app.use('/api/focus', focusRoutes);
 
-// Health check endpoint
+// ✅ FIXED: Health check with database status
 app.get('/api/health', (req, res) => {
+    const dbStatus = mongoose.connection.readyState === 1 ? 'connected' : 'disconnected';
+    const memoryUsage = process.memoryUsage();
+    
     res.json({
         status: 'ok',
         timestamp: new Date().toISOString(),
-        database: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
+        database: dbStatus,
         uptime: process.uptime(),
         environment: process.env.NODE_ENV || 'development',
-        memory: process.memoryUsage()
+        memory: {
+            rss: `${Math.round(memoryUsage.rss / 1024 / 1024)}MB`,
+            heapTotal: `${Math.round(memoryUsage.heapTotal / 1024 / 1024)}MB`,
+            heapUsed: `${Math.round(memoryUsage.heapUsed / 1024 / 1024)}MB`
+        },
+        node: process.version,
+        platform: process.platform
     });
 });
 
-// ✅ FIXED: Test endpoint for debugging
+// ✅ FIXED: Enhanced test endpoint
 app.get('/api/test-auth', (req, res) => {
     res.json({
         success: true,
         message: 'Auth test endpoint working',
         timestamp: new Date().toISOString(),
+        server: 'TaskController API',
+        version: '8.0',
+        cors: 'enabled',
         env: {
             node_env: process.env.NODE_ENV,
             has_jwt_secret: !!process.env.JWT_SECRET,
@@ -140,8 +181,35 @@ app.get('/api/test-auth', (req, res) => {
     });
 });
 
+// ✅ FIXED: Root endpoint for quick checks
+app.get('/api', (req, res) => {
+    res.json({
+        app: 'TaskController API',
+        version: '8.0',
+        status: 'running',
+        endpoints: {
+            auth: '/api/auth',
+            todos: '/api/todos',
+            notes: '/api/notes',
+            focus: '/api/focus',
+            health: '/api/health'
+        },
+        timestamp: new Date().toISOString()
+    });
+});
+
 // Serve static files
 app.use(express.static(path.join(__dirname, 'public')));
+
+// ✅ FIXED: Add a warm-up endpoint for Render cold starts
+app.get('/api/warmup', (req, res) => {
+    console.log('🔥 Warm-up request received');
+    res.json({
+        success: true,
+        message: 'Server is warmed up',
+        timestamp: new Date().toISOString()
+    });
+});
 
 // Serve index.html for all other routes (SPA support)
 app.get('*', (req, res) => {
@@ -155,7 +223,9 @@ app.use((err, req, res, next) => {
         name: err.name,
         message: err.message,
         code: err.code,
-        status: err.status
+        status: err.status,
+        path: req.path,
+        method: req.method
     });
     
     // JWT errors
@@ -193,21 +263,31 @@ app.use((err, req, res, next) => {
         });
     }
     
+    // Timeout errors
+    if (err.code === 'ECONNRESET' || err.code === 'ETIMEDOUT') {
+        return res.status(408).json({
+            success: false,
+            message: 'Request timeout. Please try again.',
+            error: 'REQUEST_TIMEOUT'
+        });
+    }
+    
     // Default error
     const statusCode = err.status || 500;
     res.status(statusCode).json({
         success: false,
         message: err.message || 'Internal Server Error',
         error: err.name || 'SERVER_ERROR',
+        path: req.path,
+        timestamp: new Date().toISOString(),
         ...(process.env.NODE_ENV !== 'production' && { 
-            stack: err.stack,
-            details: err
+            stack: err.stack
         })
     });
 });
 
 const PORT = process.env.PORT || 10000;
-app.listen(PORT, '0.0.0.0', () => {
+const server = app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 TaskController Server running on port ${PORT}`);
     console.log(`🌐 Environment: ${process.env.NODE_ENV || 'development'}`);
     console.log(`🔗 Server URL: http://0.0.0.0:${PORT}`);
@@ -216,4 +296,31 @@ app.listen(PORT, '0.0.0.0', () => {
     console.log(`   - MONGODB_URI: ${process.env.MONGODB_URI ? '✓ Set' : '✗ Missing'}`);
     console.log(`   - JWT_SECRET: ${process.env.JWT_SECRET ? '✓ Set' : '✗ Missing'}`);
     console.log(`   - PORT: ${PORT}`);
+    console.log(`   - CORS: Enabled for Render`);
+});
+
+// ✅ FIXED: Server timeout configuration for Render
+server.timeout = 30000; // 30 seconds
+server.keepAliveTimeout = 120000; // 120 seconds
+server.headersTimeout = 130000; // 130 seconds
+
+// Handle graceful shutdown
+process.on('SIGTERM', () => {
+    console.log('SIGTERM received, shutting down gracefully...');
+    server.close(() => {
+        console.log('Server closed');
+        mongoose.connection.close(false, () => {
+            console.log('MongoDB connection closed');
+            process.exit(0);
+        });
+    });
+});
+
+process.on('uncaughtException', (err) => {
+    console.error('Uncaught Exception:', err);
+    process.exit(1);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('Unhandled Rejection at:', promise, 'reason:', reason);
 });
