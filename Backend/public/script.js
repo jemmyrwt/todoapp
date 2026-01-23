@@ -1895,12 +1895,20 @@ async function logout() {
     showToast('Logged out successfully', 'success');
     console.log('✅ Logout completed');
 }
+// 32. Switch Account Function (FIXED - Modal Based)
+function showSwitchAccountModal() {
+    const modal = document.getElementById('switch-account-modal');
+    if (modal) modal.classList.add('show');
+}
 
-// 32. Switch Account Function
-function switchAccount() {
-    if (confirm('Switch to another account? You will be logged out.')) {
-        logout();
-    }
+function closeSwitchAccountModal() {
+    const modal = document.getElementById('switch-account-modal');
+    if (modal) modal.classList.remove('show');
+}
+
+function confirmSwitchAccount() {
+    closeSwitchAccountModal();
+    logout();
 }
 
 // 33. Modal Functions
