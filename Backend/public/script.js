@@ -1,4 +1,3 @@
-
 // TaskController - Fixed Authentication for Render
 const API_BASE_URL = window.location.hostname === 'localhost'
         ? 'http://localhost:10000/api'
@@ -13,6 +12,7 @@ let notes = [];
 let isLoginMode = true;
 let timer = null;
 let timeLeft = 1500;
+let totalTime = 1500; // NEW: Single source of truth for timer duration
 let timerRunning = false;
 let soundEnabled = true;
 let autosaveEnabled = true;
@@ -594,17 +594,21 @@ document.querySelectorAll('.nav-btn, .m-nav-item').forEach(btn => {
         timerResetBtn.addEventListener('click', resetTimer);
     }
     
-    // Timer presets
-    const timerPresets = document.getElementById('timer-presets');
-    if (timerPresets) {
-        timerPresets.addEventListener('change', function() {
-            timeLeft = parseInt(this.value);
-            updateTimerDisplay();
-            updateTimerRing();
-            if (!timerRunning) {
-                resetTimer();
-            }
-        });
+    // ✅ FIXED: Timer preset button (replaces old select)
+    const timerPresetBtn = document.getElementById('timer-preset-btn');
+    if (timerPresetBtn) {
+        timerPresetBtn.addEventListener('click', openPresetModal);
+    }
+    
+    // ✅ FIXED: Priority and Category buttons (replaces native select)
+    const priorityBtn = document.getElementById('priority-btn');
+    if (priorityBtn) {
+        priorityBtn.addEventListener('click', openPriorityModal);
+    }
+    
+    const categoryBtn = document.getElementById('category-btn');
+    if (categoryBtn) {
+        categoryBtn.addEventListener('click', openCategoryModal);
     }
     
     // Note controls
@@ -1238,6 +1242,19 @@ function editTask(taskId) {
         const titleInput = document.getElementById('taskTitle');
         if (titleInput) titleInput.value = task.title;
         
+        // Update priority button label
+        const priorityBtn = document.getElementById('priority-btn');
+        if (priorityBtn) {
+            priorityBtn.textContent = task.priority.charAt(0).toUpperCase() + task.priority.slice(1);
+        }
+        
+        // Update category button label
+        const categoryBtn = document.getElementById('category-btn');
+        if (categoryBtn) {
+            categoryBtn.textContent = task.category;
+        }
+        
+        // Update hidden select values
         const prioSelect = document.getElementById('prioVal');
         if (prioSelect) prioSelect.value = task.priority;
         
@@ -1483,7 +1500,7 @@ function autoSaveNotes() {
     saveNote();
 }
 
-// 26. Timer Functions
+// 26. Timer Functions - UPDATED to use totalTime instead of select
 function startTimer() {
     if (timerRunning) {
         // Pause timer
@@ -1537,9 +1554,7 @@ function startTimer() {
                 
                 // Record session
                 focusSessions++;
-                const presetSelect = document.getElementById('timer-presets');
-                const presetValue = presetSelect ? parseInt(presetSelect.value) : 1500;
-                totalFocusTime += presetValue;
+                totalFocusTime += totalTime; // Use totalTime instead of preset select value
                 localStorage.setItem(STORAGE_KEYS.FOCUS_SESSIONS, focusSessions);
                 localStorage.setItem(STORAGE_KEYS.FOCUS_TIME, totalFocusTime);
                 updateFocusStats();
@@ -1554,14 +1569,14 @@ function startTimer() {
                             'Accept': 'application/json'
                         },
                         body: JSON.stringify({
-                            duration: presetValue,
+                            duration: totalTime, // Use totalTime
                             mode: 'pomodoro'
                         })
                     }, 10000).catch(console.error);
                 }
                 
                 // Reset timer
-                timeLeft = presetValue;
+                timeLeft = totalTime; // Reset to totalTime
                 updateTimerDisplay();
                 updateTimerRing();
             }
@@ -1572,8 +1587,7 @@ function startTimer() {
 function resetTimer() {
     clearInterval(timer);
     timerRunning = false;
-    const presetSelect = document.getElementById('timer-presets');
-    timeLeft = presetSelect ? parseInt(presetSelect.value) : 1500;
+    timeLeft = totalTime; // Reset to totalTime instead of preset select value
     updateTimerDisplay();
     updateTimerRing();
     const startBtn = document.getElementById('timer-start');
@@ -1596,8 +1610,7 @@ function updateTimerDisplay() {
 }
 
 function updateTimerRing() {
-    const presetSelect = document.getElementById('timer-presets');
-    const totalTime = presetSelect ? parseInt(presetSelect.value) : 1500;
+    // Use totalTime instead of preset select value
     const progress = ((totalTime - timeLeft) / totalTime) * 565;
     const ring = document.getElementById('timer-ring-fill');
     if (ring) {
@@ -1629,7 +1642,106 @@ function updateFocusStats() {
     }
 }
 
-// 27. Utility Functions
+// 27. Custom Modal Functions for Mobile-Friendly Selects
+
+// Timer Preset Modal Functions
+function openPresetModal() {
+    const modal = document.getElementById('preset-modal');
+    if (modal) {
+        modal.classList.add('show');
+    }
+}
+
+function selectPreset(seconds, label) {
+    // Update totalTime
+    totalTime = seconds;
+    timeLeft = seconds;
+    
+    // Update timer display
+    updateTimerDisplay();
+    updateTimerRing();
+    
+    // Update button label
+    const presetBtn = document.getElementById('timer-preset-btn');
+    if (presetBtn) {
+        presetBtn.textContent = label;
+    }
+    
+    // Reset timer if not running
+    if (!timerRunning) {
+        resetTimer();
+    }
+    
+    // Close modal
+    const modal = document.getElementById('preset-modal');
+    if (modal) {
+        modal.classList.remove('show');
+    }
+    
+    showToast(`Timer set to ${label}`, 'success');
+}
+
+// Priority Modal Functions
+function openPriorityModal() {
+    const modal = document.getElementById('priority-modal');
+    if (modal) {
+        modal.classList.add('show');
+    }
+}
+
+function selectPriority(value, label) {
+    // Update hidden select value
+    const prioSelect = document.getElementById('prioVal');
+    if (prioSelect) {
+        prioSelect.value = value;
+    }
+    
+    // Update button label
+    const priorityBtn = document.getElementById('priority-btn');
+    if (priorityBtn) {
+        priorityBtn.textContent = label;
+    }
+    
+    // Close modal
+    const modal = document.getElementById('priority-modal');
+    if (modal) {
+        modal.classList.remove('show');
+    }
+    
+    showToast(`Priority set to ${label}`, 'success');
+}
+
+// Category Modal Functions
+function openCategoryModal() {
+    const modal = document.getElementById('category-modal');
+    if (modal) {
+        modal.classList.add('show');
+    }
+}
+
+function selectCategory(value, label) {
+    // Update hidden select value
+    const catSelect = document.getElementById('catVal');
+    if (catSelect) {
+        catSelect.value = value;
+    }
+    
+    // Update button label
+    const categoryBtn = document.getElementById('category-btn');
+    if (categoryBtn) {
+        categoryBtn.textContent = label;
+    }
+    
+    // Close modal
+    const modal = document.getElementById('category-modal');
+    if (modal) {
+        modal.classList.remove('show');
+    }
+    
+    showToast(`Category set to ${label}`, 'success');
+}
+
+// 28. Utility Functions
 function switchView(viewId) {
     // Hide all views
     document.querySelectorAll('.view').forEach(view => {
@@ -1716,7 +1828,7 @@ function hideToast() {
     }
 }
 
-// 28. Toggle Theme
+// 29. Toggle Theme
 function toggleTheme() {
     const currentTheme = document.body.getAttribute('data-theme');
     const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
@@ -1797,11 +1909,21 @@ function setupKeyboardShortcuts() {
             closeLogoutModal();
             closeWipeModal();
             closeShortcutsModal();
+            
+            // Also close custom modals
+            const presetModal = document.getElementById('preset-modal');
+            if (presetModal) presetModal.classList.remove('show');
+            
+            const priorityModal = document.getElementById('priority-modal');
+            if (priorityModal) priorityModal.classList.remove('show');
+            
+            const categoryModal = document.getElementById('category-modal');
+            if (categoryModal) categoryModal.classList.remove('show');
         }
     });
 }
 
-// 29. Helper functions
+// 30. Helper functions
 function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
@@ -1821,7 +1943,7 @@ function getPriorityColor(priority) {
     return colors[priority] || '#6b7280';
 }
 
-// 30. Play Sound Function
+// 31. Play Sound Function
 function playSound(type) {
     if (!soundEnabled) return;
     
@@ -1850,7 +1972,7 @@ function playSound(type) {
     }
 }
 
-// 31. Logout Functions - FIXED
+// 32. Logout Functions - FIXED
 function showLogoutModal() {
     const modal = document.getElementById('logout-modal');
     if (modal) {
@@ -1895,7 +2017,7 @@ async function logout() {
     showToast('Logged out successfully', 'success');
     console.log('✅ Logout completed');
 }
-// 32. Switch Account Function (FIXED - Modal Based)
+// 33. Switch Account Function (FIXED - Modal Based)
 function showSwitchAccountModal() {
     const modal = document.getElementById('switch-account-modal');
     if (modal) modal.classList.add('show');
@@ -1911,7 +2033,7 @@ function confirmSwitchAccount() {
     logout();
 }
 
-// 33. Modal Functions
+// 34. Modal Functions
 function showKeyboardShortcutsModal() {
     const modal = document.getElementById('shortcuts-modal');
     if (modal) modal.classList.add('show');
@@ -1932,7 +2054,7 @@ function closeWipeModal() {
     if (modal) modal.classList.remove('show');
 }
 
-// 34. Export Data Function
+// 35. Export Data Function
 async function exportData() {
     try {
         const dataToExport = {
@@ -1970,7 +2092,7 @@ async function exportData() {
     }
 }
 
-// 35. Wipe Data Function
+// 36. Wipe Data Function
 function wipeData() {
     if (confirm('⚠️ This will permanently delete ALL your local data including tasks, notes, and settings. This action cannot be undone.\n\nAre you sure?')) {
         localStorage.clear();
@@ -1989,7 +2111,7 @@ function wipeData() {
     }
 }
 
-// 36. Loading Overlay Functions
+// 37. Loading Overlay Functions
 function showLoading(message = 'Loading...') {
     const overlay = document.getElementById('loading-overlay');
     if (overlay) {
@@ -2038,6 +2160,14 @@ window.showLoading = showLoading;
 window.hideLoading = hideLoading;
 window.hideToast = hideToast;
 window.switchView = switchView;
+
+// NEW: Custom modal functions for mobile-friendly selects
+window.openPresetModal = openPresetModal;
+window.selectPreset = selectPreset;
+window.openPriorityModal = openPriorityModal;
+window.selectPriority = selectPriority;
+window.openCategoryModal = openCategoryModal;
+window.selectCategory = selectCategory;
 
 console.log('✅ All authentication functions loaded');
 console.log('🚀 TaskController Authentication System Ready');
