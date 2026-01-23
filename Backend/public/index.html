@@ -47,13 +47,16 @@
                 <div class="nav-btn" data-view="settings"><i class="fas fa-cog"></i> Settings</div>
             </nav>
             <div class="account-buttons">
-                <button class="switch-account-btn" onclick="switchAccount()">
-                    <i class="fas fa-exchange-alt"></i> Switch Account
-                </button>
-                <button class="logout-btn" onclick="showLogoutModal()">
-                    <i class="fas fa-power-off"></i> Logout
-                </button>
-            </div>
+    <!-- ✅ Switch Account (Modal Based) -->
+    <button class="switch-account-btn" onclick="showSwitchAccountModal()">
+        <i class="fas fa-exchange-alt"></i> Switch Account
+    </button>
+
+    <!-- ✅ Logout -->
+    <button class="logout-btn" onclick="showLogoutModal()">
+        <i class="fas fa-power-off"></i> Logout
+    </button>
+</div>
         </aside>
 
         <main class="workspace">
