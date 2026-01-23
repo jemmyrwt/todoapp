@@ -1,3 +1,4 @@
+
 // TaskController - Fixed Authentication for Render
 const API_BASE_URL = window.location.hostname === 'localhost'
         ? 'http://localhost:10000/api'
@@ -5,7 +6,7 @@ const API_BASE_URL = window.location.hostname === 'localhost'
 console.log('🌐 TaskController Loading...');
 console.log('📡 API Base URL:', API_BASE_URL);
 console.log('🌍 Current Origin:', window.location.origin);
-console.log('🔍 Environment: Broweser ');
+console.log('🔍 Environment: Browser');
 
 let tasks = [];
 let notes = [];
@@ -48,6 +49,30 @@ const notificationSound = new Audio('https://assets.mixkit.co/sfx/preview/mixkit
 taskSound.load();
 timerSound.load();
 notificationSound.load();
+
+// ✅ FIXED: Utility function for fetch with timeout
+function fetchWithTimeout(url, options = {}, timeout = 15000) {
+    return new Promise((resolve, reject) => {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => {
+            controller.abort();
+            reject(new Error('Request timeout'));
+        }, timeout);
+        
+        fetch(url, {
+            ...options,
+            signal: controller.signal
+        })
+        .then(response => {
+            clearTimeout(timeoutId);
+            resolve(response);
+        })
+        .catch(error => {
+            clearTimeout(timeoutId);
+            reject(error);
+        });
+    });
+}
 
 // 1. Initial Launch - FIXED AUTH LOAD
 window.onload = async () => {
@@ -103,14 +128,13 @@ window.onload = async () => {
         try {
             console.log('🔐 Attempting to verify existing token...');
             
-            // First check if server is reachable
-            const healthCheck = await fetch(`${API_BASE_URL}/health`, {
+            // First check if server is reachable with shorter timeout
+            const healthCheck = await fetchWithTimeout(`${API_BASE_URL}/health`, {
                 method: 'GET',
                 headers: {
                     'Accept': 'application/json'
-                },
-                signal: AbortSignal.timeout(5000)
-            }).catch(() => null);
+                }
+            }, 5000);
             
             if (!healthCheck || !healthCheck.ok) {
                 console.log('⚠️ Server not reachable, using offline mode');
@@ -122,15 +146,14 @@ window.onload = async () => {
             
             // Verify token with backend
             console.log('🔐 Verifying token with server...');
-            const response = await fetch(`${API_BASE_URL}/auth/me`, {
+            const response = await fetchWithTimeout(`${API_BASE_URL}/auth/me`, {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${authToken}`,
                     'Content-Type': 'application/json',
                     'Accept': 'application/json'
-                },
-                signal: AbortSignal.timeout(10000)
-            });
+                }
+            }, 10000);
             
             console.log('✅ Auth check response:', response.status, response.statusText);
             
@@ -163,7 +186,7 @@ window.onload = async () => {
         } catch (error) {
             console.error('❌ Auth verification error:', error);
             
-            if (error.name === 'AbortError') {
+            if (error.message.includes('timeout') || error.name === 'TimeoutError') {
                 console.log('⚠️ Auth check timeout, using local data');
                 loadLocalData();
                 showToast('Server timeout, using local data', 'warning');
@@ -263,15 +286,16 @@ async function handleAuth() {
         console.log('📤 Sending auth request to:', `${API_BASE_URL}${endpoint}`);
         console.log('📦 Request body:', { ...body, password: '***' });
 
-        const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+        // ✅ FIXED: Use fetchWithTimeout to prevent infinite loading
+        const response = await fetchWithTimeout(`${API_BASE_URL}${endpoint}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            
+                'Accept': 'application/json',
+                'Origin': window.location.origin
             },
             body: JSON.stringify(body),
-        });
+        }, 20000); // 20 second timeout
 
         console.log('📥 Auth response status:', response.status, response.statusText);
         
@@ -367,14 +391,21 @@ async function handleAuth() {
         console.error('❌ Auth error:', error);
         console.error('❌ Error stack:', error.stack);
         
+        // Show specific error messages
         if (!isOnline) {
             showToast('You are offline. Please check your internet connection.', 'error');
+        } else if (error.message.includes('timeout') || error.name === 'TimeoutError') {
+            showToast('Server is taking too long to respond. Render might be starting up. Please try again in 30 seconds.', 'warning');
+        } else if (error.message.includes('NetworkError') || error.message.includes('Failed to fetch')) {
+            showToast('Cannot connect to server. Please check your connection or try again later.', 'error');
         } else {
             showToast(error.message || 'Authentication failed. Please try again.', 'error');
         }
     } finally {
+        // ✅ FIXED: Always reset button state
         authBtn.textContent = originalText;
         authBtn.disabled = false;
+        authBtn.innerHTML = originalText; // Restore original HTML
     }
 }
 
@@ -678,7 +709,7 @@ async function saveSettings() {
     // Sync with server if authenticated
     if (authToken && currentUser) {
         try {
-            await fetch(`${API_BASE_URL}/auth/settings`, {
+            await fetchWithTimeout(`${API_BASE_URL}/auth/settings`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -686,7 +717,7 @@ async function saveSettings() {
                     'Accept': 'application/json'
                 },
                 body: JSON.stringify(settings)
-            });
+            }, 10000);
         } catch (error) {
             console.error('Save settings error:', error);
         }
@@ -797,15 +828,14 @@ async function loadUserData() {
     console.log('📥 Loading user data from server...');
     
     try {
-        // Load tasks
-        const tasksResponse = await fetch(`${API_BASE_URL}/todos`, {
+        // Load tasks with timeout
+        const tasksResponse = await fetchWithTimeout(`${API_BASE_URL}/todos`, {
             headers: {
                 'Authorization': `Bearer ${authToken}`,
                 'Content-Type': 'application/json',
                 'Accept': 'application/json'
-            },
-            signal: AbortSignal.timeout(15000)
-        });
+            }
+        }, 15000);
         
         if (tasksResponse.ok) {
             const tasksData = await tasksResponse.json();
@@ -816,15 +846,14 @@ async function loadUserData() {
             console.error('❌ Failed to load tasks:', tasksResponse.status);
         }
         
-        // Load notes
-        const notesResponse = await fetch(`${API_BASE_URL}/notes`, {
+        // Load notes with timeout
+        const notesResponse = await fetchWithTimeout(`${API_BASE_URL}/notes`, {
             headers: {
                 'Authorization': `Bearer ${authToken}`,
                 'Content-Type': 'application/json',
                 'Accept': 'application/json'
-            },
-            signal: AbortSignal.timeout(15000)
-        });
+            }
+        }, 15000);
         
         if (notesResponse.ok) {
             const notesData = await notesResponse.json();
@@ -835,15 +864,14 @@ async function loadUserData() {
             console.error('❌ Failed to load notes:', notesResponse.status);
         }
         
-        // Load focus stats
-        const focusResponse = await fetch(`${API_BASE_URL}/focus/stats`, {
+        // Load focus stats with timeout
+        const focusResponse = await fetchWithTimeout(`${API_BASE_URL}/focus/stats`, {
             headers: {
                 'Authorization': `Bearer ${authToken}`,
                 'Content-Type': 'application/json',
                 'Accept': 'application/json'
-            },
-            signal: AbortSignal.timeout(15000)
-        });
+            }
+        }, 15000);
         
         if (focusResponse.ok) {
             const focusData = await focusResponse.json();
@@ -868,7 +896,7 @@ async function loadUserData() {
     } catch (error) {
         console.error('❌ Load data error:', error);
         
-        if (error.name === 'AbortError') {
+        if (error.message.includes('timeout') || error.name === 'TimeoutError') {
             showToast('Data load timeout, using local data', 'warning');
         } else {
             showToast('Failed to load data, using local cache', 'error');
@@ -893,7 +921,7 @@ async function syncDataIfOnline() {
         for (const task of tasks) {
             if (task._id && task._id.startsWith('local_')) {
                 try {
-                    const response = await fetch(`${API_BASE_URL}/todos`, {
+                    const response = await fetchWithTimeout(`${API_BASE_URL}/todos`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -908,9 +936,8 @@ async function syncDataIfOnline() {
                             dueDate: task.dueDate || null,
                             tags: task.tags || [],
                             isCompleted: task.isCompleted || false
-                        }),
-                        signal: AbortSignal.timeout(10000)
-                    });
+                        })
+                    }, 10000);
 
                     if (response.ok) {
                         const data = await response.json();
@@ -930,7 +957,7 @@ async function syncDataIfOnline() {
         for (const note of notes) {
             if (note._id && note._id.startsWith('local_')) {
                 try {
-                    const response = await fetch(`${API_BASE_URL}/notes`, {
+                    const response = await fetchWithTimeout(`${API_BASE_URL}/notes`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -942,9 +969,8 @@ async function syncDataIfOnline() {
                             content: note.content,
                             category: note.category || 'Personal',
                             tags: note.tags || []
-                        }),
-                        signal: AbortSignal.timeout(10000)
-                    });
+                        })
+                    }, 10000);
 
                     if (response.ok) {
                         const data = await response.json();
@@ -973,19 +999,21 @@ async function syncDataIfOnline() {
     }
 }
 
-// 13. Server Health Check
+// 13. Server Health Check - FIXED
 async function checkServerHealth() {
     try {
-        const response = await fetch(`${API_BASE_URL}/health`, {
-            signal: AbortSignal.timeout(5000)
-        });
+        const response = await fetchWithTimeout(`${API_BASE_URL}/health`, {}, 10000);
         if (response.ok) {
-            console.log('✅ Server is healthy');
+            const data = await response.json();
+            console.log('✅ Server is healthy:', data);
+            return true;
         } else {
-            console.warn('⚠️ Server health check failed');
+            console.warn('⚠️ Server health check failed:', response.status);
+            return false;
         }
     } catch (error) {
-        console.warn('⚠️ Server is unreachable');
+        console.warn('⚠️ Server is unreachable:', error.message);
+        return false;
     }
 }
 
@@ -1040,16 +1068,15 @@ async function addTask() {
     // Try to sync with server if online
     if (isOnline && authToken) {
         try {
-            const response = await fetch(`${API_BASE_URL}/todos`, {
+            const response = await fetchWithTimeout(`${API_BASE_URL}/todos`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${authToken}`,
                     'Accept': 'application/json'
                 },
-                body: JSON.stringify(taskData),
-                signal: AbortSignal.timeout(10000)
-            });
+                body: JSON.stringify(taskData)
+            }, 10000);
 
             if (response.ok) {
                 const data = await response.json();
@@ -1131,7 +1158,7 @@ function toggleTask(taskId) {
         
         // Sync with server if online
         if (isOnline && authToken && task._id && !task._id.startsWith('local_')) {
-            fetch(`${API_BASE_URL}/todos/${task._id}`, {
+            fetchWithTimeout(`${API_BASE_URL}/todos/${task._id}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -1141,7 +1168,7 @@ function toggleTask(taskId) {
                 body: JSON.stringify({
                     isCompleted: task.isCompleted
                 })
-            }).catch(console.error);
+            }, 10000).catch(console.error);
         }
     }
 }
@@ -1186,13 +1213,13 @@ function deleteTask(taskId) {
     
     // Delete from server if online
     if (isOnline && authToken && task._id && !task._id.startsWith('local_')) {
-        fetch(`${API_BASE_URL}/todos/${task._id}`, {
+        fetchWithTimeout(`${API_BASE_URL}/todos/${task._id}`, {
             method: 'DELETE',
             headers: {
                 'Authorization': `Bearer ${authToken}`,
                 'Accept': 'application/json'
             }
-        }).catch(console.error);
+        }, 10000).catch(console.error);
     }
     
     renderTasks();
@@ -1317,7 +1344,7 @@ async function saveNote() {
     // Sync with server if online
     if (isOnline && authToken) {
         try {
-            const response = await fetch(`${API_BASE_URL}/notes`, {
+            const response = await fetchWithTimeout(`${API_BASE_URL}/notes`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -1329,9 +1356,8 @@ async function saveNote() {
                     content: content,
                     category: 'Personal',
                     tags: []
-                }),
-                signal: AbortSignal.timeout(10000)
-            });
+                })
+            }, 10000);
 
             if (response.ok) {
                 const data = await response.json();
@@ -1429,13 +1455,13 @@ function deleteNote(noteId) {
     
     // Delete from server if online
     if (isOnline && authToken && note._id && !note._id.startsWith('local_')) {
-        fetch(`${API_BASE_URL}/notes/${note._id}`, {
+        fetchWithTimeout(`${API_BASE_URL}/notes/${note._id}`, {
             method: 'DELETE',
             headers: {
                 'Authorization': `Bearer ${authToken}`,
                 'Accept': 'application/json'
             }
-        }).catch(console.error);
+        }, 10000).catch(console.error);
     }
     
     renderNotes();
@@ -1516,7 +1542,7 @@ function startTimer() {
                 
                 // Save to server if online
                 if (isOnline && authToken) {
-                    fetch(`${API_BASE_URL}/focus/start`, {
+                    fetchWithTimeout(`${API_BASE_URL}/focus/start`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -1527,7 +1553,7 @@ function startTimer() {
                             duration: presetValue,
                             mode: 'pomodoro'
                         })
-                    }).catch(console.error);
+                    }, 10000).catch(console.error);
                 }
                 
                 // Reset timer
@@ -1708,7 +1734,7 @@ function toggleTheme() {
     
     // Sync with server if online
     if (isOnline && authToken) {
-        fetch(`${API_BASE_URL}/auth/settings`, {
+        fetchWithTimeout(`${API_BASE_URL}/auth/settings`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
@@ -1716,7 +1742,7 @@ function toggleTheme() {
                 'Accept': 'application/json'
             },
             body: JSON.stringify({ theme: newTheme })
-        }).catch(console.error);
+        }, 10000).catch(console.error);
     }
     
     showToast(`Theme changed to ${newTheme} mode`, 'success');
