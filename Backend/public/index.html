@@ -1,441 +1,447 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>TaskController | Premium Productivity</title>
-    <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-</head>
-<body data-theme="dark">
+<!DOCTYPE html>  <html lang="en">  
+<head>  
+    <meta charset="UTF-8">  
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">  
+    <title>TaskController | Premium Productivity</title>  
+    <link rel="stylesheet" href="style.css">  
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">  
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">  
+</head>  
+<body data-theme="dark">  <!-- AUTH SCREEN -->  
+<div id="auth-screen" class="auth-overlay">  
+    <div class="auth-card">  
+        <div class="auth-logo"><i class="fas fa-bolt"></i></div>  
+        <h2 id="auth-title">TaskController</h2>  
+        <p id="auth-desc">Secure access to your dashboard</p>  
+          
+        <div id="reg-extra" class="auth-extra-field">  
+<input type="text" id="auth-name" placeholder="Your Full Name">
 
-    <!-- AUTH SCREEN -->
-    <div id="auth-screen" class="auth-overlay">
-        <div class="auth-card">
-            <div class="auth-logo"><i class="fas fa-bolt"></i></div>
-            <h2 id="auth-title">TaskController</h2>
-            <p id="auth-desc">Secure access to your dashboard</p>
-            
-            <div id="reg-extra" class="auth-extra-field">
-    <input type="text" id="auth-name" placeholder="Your Full Name">
-</div>
-            
-            <input type="email" id="auth-email" placeholder="Email Address" required>
-            <input type="password" id="auth-pass" placeholder="Password" required>
-            
-            <button id="auth-main-btn">Access Workspace</button>
-            
-            <p class="toggle-auth">
-                New to TaskController? <span id="toggle-text-span">Create Account</span>
-            </p>
-        </div>
-    </div>
+</div>  <input type="email" id="auth-email" placeholder="Email Address" required>  
+        <input type="password" id="auth-pass" placeholder="Password" required>  
+          
+        <button id="auth-main-btn">Access Workspace</button>  
+          
+        <p class="toggle-auth">  
+            New to TaskController? <span id="toggle-text-span">Create Account</span>  
+        </p>  
+    </div>  
+</div>  
 
-    <!-- MAIN APP -->
-    <div class="app-shell" id="app-content" style="display: none;">
-        <aside class="sidebar">
-            <div class="logo">
-                <div class="logo-box"><i class="fas fa-bolt"></i></div>
-                <span id="logo-text">TaskController</span>
-            </div>
-            <nav class="side-nav">
-                <div class="nav-btn active" data-view="tasks"><i class="fas fa-list-check"></i> Tasks</div>
-                <div class="nav-btn" data-view="analytics"><i class="fas fa-chart-pie"></i> Analytics</div>
-                <div class="nav-btn" data-view="focus"><i class="fas fa-stopwatch"></i> Focus Timer</div>
-                <div class="nav-btn" data-view="notes"><i class="fas fa-sticky-note"></i> Quick Notes</div>
-                <div class="nav-btn" data-view="settings"><i class="fas fa-cog"></i> Settings</div>
-            </nav>
-            <div class="account-buttons">
-    <!-- ✅ Switch Account (Modal Based) -->
-    <button class="switch-account-btn" onclick="showSwitchAccountModal()">
-        <i class="fas fa-exchange-alt"></i> Switch Account
-    </button>
+<!-- MAIN APP -->  
+<div class="app-shell" id="app-content" style="display: none;">  
+    <aside class="sidebar">  
+        <div class="logo">  
+            <div class="logo-box"><i class="fas fa-bolt"></i></div>  
+            <span id="logo-text">TaskController</span>  
+        </div>  
+        <nav class="side-nav">  
+            <div class="nav-btn active" data-view="tasks"><i class="fas fa-list-check"></i> Tasks</div>  
+            <div class="nav-btn" data-view="analytics"><i class="fas fa-chart-pie"></i> Analytics</div>  
+            <div class="nav-btn" data-view="focus"><i class="fas fa-stopwatch"></i> Focus Timer</div>  
+            <div class="nav-btn" data-view="notes"><i class="fas fa-sticky-note"></i> Quick Notes</div>  
+            <div class="nav-btn" data-view="settings"><i class="fas fa-cog"></i> Settings</div>  
+        </nav>  
+        <div class="account-buttons">  
+<!-- ✅ Switch Account (Modal Based) -->  
+<button class="switch-account-btn" onclick="showSwitchAccountModal()">  
+    <i class="fas fa-exchange-alt"></i> Switch Account  
+</button>  
 
-    <!-- ✅ Logout -->
-    <button class="logout-btn" onclick="showLogoutModal()">
-        <i class="fas fa-power-off"></i> Logout
-    </button>
-</div>
-        </aside>
+<!-- ✅ Logout -->  
+<button class="logout-btn" onclick="showLogoutModal()">  
+    <i class="fas fa-power-off"></i> Logout  
+</button>
 
-        <main class="workspace">
-            <!-- TASKS VIEW -->
-            <section id="view-tasks" class="view active">
-                <header class="view-header">
-                    <h1>Command Center</h1>
-                    <div class="header-right">
-                        <p id="live-clock">00:00:00</p>
-                    </div>
-                </header>
-                
-                <div class="task-creator">
-                    <div class="input-row">
-                        <input type="text" id="taskTitle" placeholder="Deploy new objective...">
-                        <button id="addBtn" onclick="addTask()"><i class="fas fa-plus"></i></button>
-                    </div>
-                    <div class="meta-row">
-                        <select id="prioVal">
-                            <option value="low">Low Priority</option>
-                            <option value="medium" selected>Normal Priority</option>
-                            <option value="high">Urgent 🔥</option>
-                        </select>
-                        <select id="catVal">
-                            <option value="Work">Work</option>
-                            <option value="Personal">Personal</option>
-                            <option value="Finance">Finance</option>
-                            <option value="Health">Health</option>
-                            <option value="Learning">Learning</option>
-                        </select>
-                        <input type="date" id="dateVal">
-                    </div>
-                    <div class="progress-bar">
-                        <div class="progress-fill" id="task-progress"></div>
-                    </div>
-                    <div class="task-filters">
-                        <button class="filter-btn active" data-filter="all">All Tasks</button>
-                        <button class="filter-btn" data-filter="pending">Pending</button>
-                        <button class="filter-btn" data-filter="completed">Completed</button>
-                    </div>
-                </div>
-                <div class="task-grid" id="taskGrid">
-                    <!-- Tasks will be rendered here -->
-                </div>
-            </section>
+</div>  
+        </aside>  <main class="workspace">  
+        <!-- TASKS VIEW -->  
+        <section id="view-tasks" class="view active">  
+            <header class="view-header">  
+                <h1>Command Center</h1>  
+                <div class="header-right">  
+                    <p id="live-clock">00:00:00</p>  
+                </div>  
+            </header>  
+              
+            <div class="task-creator">  
+                <div class="input-row">  
+                    <input type="text" id="taskTitle" placeholder="Deploy new objective...">  
+                    <button id="addBtn" onclick="addTask()"><i class="fas fa-plus"></i></button>  
+                </div>  
+                <div class="meta-row">  
+                    <select id="prioVal">  
+                        <option value="low">Low Priority</option>  
+                        <option value="medium" selected>Normal Priority</option>  
+                        <option value="high">Urgent 🔥</option>  
+                    </select>  
+                    <select id="catVal">  
+                        <option value="Work">Work</option>  
+                        <option value="Personal">Personal</option>  
+                        <option value="Finance">Finance</option>  
+                        <option value="Health">Health</option>  
+                        <option value="Learning">Learning</option>  
+                    </select>  
+                    <input type="date" id="dateVal">  
+                </div>  
+                <div class="progress-bar">  
+                    <div class="progress-fill" id="task-progress"></div>  
+                </div>  
+                <div class="task-filters">  
+                    <button class="filter-btn active" data-filter="all">All Tasks</button>  
+                    <button class="filter-btn" data-filter="pending">Pending</button>  
+                    <button class="filter-btn" data-filter="completed">Completed</button>  
+                </div>  
+            </div>  
+            <div class="task-grid" id="taskGrid">  
+                <!-- Tasks will be rendered here -->  
+            </div>  
+        </section>  
 
-            <!-- ANALYTICS VIEW -->
-            <section id="view-analytics" class="view">
-                <header class="view-header">
-                    <h1>Performance Data</h1>
-                </header>
-                <div class="stats-grid">
-                    <div class="stat-card"><h2 id="stat-total">0</h2><p>Total Missions</p></div>
-                    <div class="stat-card"><h2 id="stat-completed">0</h2><p>Completed</p></div>
-                    <div class="stat-card"><h2 id="stat-efficiency">0%</h2><p>Efficiency</p></div>
-                    <div class="stat-card"><h2 id="stat-pending">0</h2><p>Pending</p></div>
-                </div>
-                <div class="analytics-content">
-                    <div class="ring-container">
-                        <svg width="180" height="180">
-                            <circle cx="90" cy="90" r="75" class="ring-bg"></circle>
-                            <circle cx="90" cy="90" r="75" class="ring-fill" id="ring"></circle>
-                        </svg>
-                        <div class="ring-text" id="ring-pct">0%</div>
-                    </div>
-                    <h3>Overall Mission Success</h3>
-                    <div class="progress-bar" style="margin-top: 30px;">
-                        <div class="progress-fill" id="analytics-progress"></div>
-                    </div>
-                    <div class="category-breakdown" id="category-breakdown">
-                        <!-- Category breakdown will be rendered here -->
-                    </div>
-                </div>
-            </section>
+        <!-- ANALYTICS VIEW -->  
+        <section id="view-analytics" class="view">  
+            <header class="view-header">  
+                <h1>Performance Data</h1>  
+            </header>  
+            <div class="stats-grid">  
+                <div class="stat-card"><h2 id="stat-total">0</h2><p>Total Missions</p></div>  
+                <div class="stat-card"><h2 id="stat-completed">0</h2><p>Completed</p></div>  
+                <div class="stat-card"><h2 id="stat-efficiency">0%</h2><p>Efficiency</p></div>  
+                <div class="stat-card"><h2 id="stat-pending">0</h2><p>Pending</p></div>  
+            </div>  
+            <div class="analytics-content">  
+                <div class="ring-container">  
+                    <svg width="180" height="180">  
+                        <circle cx="90" cy="90" r="75" class="ring-bg"></circle>  
+                        <circle cx="90" cy="90" r="75" class="ring-fill" id="ring"></circle>  
+                    </svg>  
+                    <div class="ring-text" id="ring-pct">0%</div>  
+                </div>  
+                <h3>Overall Mission Success</h3>  
+                <div class="progress-bar" style="margin-top: 30px;">  
+                    <div class="progress-fill" id="analytics-progress"></div>  
+                </div>  
+                <div class="category-breakdown" id="category-breakdown">  
+                    <!-- Category breakdown will be rendered here -->  
+                </div>  
+            </div>  
+        </section>  
 
-            <!-- FOCUS TIMER VIEW -->
-            <section id="view-focus" class="view">
-                <header class="view-header">
-                    <h1>Deep Focus</h1>
-                </header>
-                <div class="focus-box">
-                    <div class="timer-display-wrap">
-                        <div class="timer-display" id="timer-display">25:00</div>
-                        <p class="timer-subtitle">Focus on your most important task</p>
-                        <div class="timer-ring">
-                            <svg width="200" height="200">
-                                <circle cx="100" cy="100" r="90" class="timer-ring-bg"></circle>
-                                <circle cx="100" cy="100" r="90" class="timer-ring-fill" id="timer-ring-fill"></circle>
-                            </svg>
-                        </div>
-                    </div>
-                    <div class="timer-controls">
-                        <button id="timer-start" class="btn-primary">
-                            <i class="fas fa-play"></i> Start Focus
-                        </button>
-                        <button id="timer-pause" class="btn-outline" style="display: none;">
-                            <i class="fas fa-pause"></i> Pause
-                        </button>
-                        <button id="timer-reset" class="btn-danger">
-                            <i class="fas fa-redo"></i> Reset
-                        </button>
-                    </div>
-                    <div class="timer-presets">
-                        <select id="timer-presets">
-                            <option value="1500">Pomodoro (25:00)</option>
-                            <option value="300">Quick Focus (5:00)</option>
-                            <option value="600">Short Focus (10:00)</option>
-                            <option value="1800">Long Focus (30:00)</option>
-                            <option value="2700">Deep Work (45:00)</option>
-                        </select>
-                    </div>
-                    <div class="timer-stats">
-                        <div class="stat-item">
-                            <i class="fas fa-fire"></i>
-                            <span id="focus-sessions">0 Sessions</span>
-                        </div>
-                        <div class="stat-item">
-                            <i class="fas fa-clock"></i>
-                            <span id="total-focus-time">0m Total</span>
-                        </div>
-                        <div class="stat-item">
-                            <i class="fas fa-bolt"></i>
-                            <span id="focus-streak">0 Day Streak</span>
-                        </div>
-                    </div>
-                </div>
-            </section>
+        <!-- FOCUS TIMER VIEW -->  
+        <section id="view-focus" class="view">  
+            <header class="view-header">  
+                <h1>Deep Focus</h1>  
+            </header>  
+            <div class="focus-box">  
+                <div class="timer-display-wrap">  
+                    <div class="timer-display" id="timer-display">25:00</div>  
+                    <p class="timer-subtitle">Focus on your most important task</p>  
+                    <div class="timer-ring">  
+                        <svg width="200" height="200">  
+                            <circle cx="100" cy="100" r="90" class="timer-ring-bg"></circle>  
+                            <circle cx="100" cy="100" r="90" class="timer-ring-fill" id="timer-ring-fill"></circle>  
+                        </svg>  
+                    </div>  
+                </div>  
+                <div class="timer-controls">  
+                    <button id="timer-start" class="btn-primary">  
+                        <i class="fas fa-play"></i> Start Focus  
+                    </button>  
+                    <button id="timer-pause" class="btn-outline" style="display: none;">  
+                        <i class="fas fa-pause"></i> Pause  
+                    </button>  
+                    <button id="timer-reset" class="btn-danger">  
+                        <i class="fas fa-redo"></i> Reset  
+                    </button>  
+                </div>  
+                <!-- PREMIUM TIMER PRESET TRIGGER -->
 
-            <!-- QUICK NOTES VIEW -->
-            <section id="view-notes" class="view">
-                <header class="view-header">
-                    <h1>Quick Notes</h1>
-                </header>
-                <div class="note-creator">
-                    <textarea id="noteContent" placeholder="Capture your thoughts, ideas, or quick notes..." rows="4"></textarea>
-                    <div class="note-controls">
-                        <button id="clearNote" class="btn-outline">Clear</button>
-                        <button id="saveNote" class="btn-primary">Save Note</button>
-                    </div>
-                </div>
-                <div class="notes-grid" id="notesGrid">
-                    <!-- Notes will be rendered here -->
-                </div>
-            </section>
+<div class="timer-presets">  
+    <div class="preset-trigger" onclick="openPresetModal()">  
+        <span id="active-preset-label">Pomodoro (25:00)</span>  
+        <i class="fas fa-chevron-down"></i>  
+    </div>  
+</div>  
+                    <div class="timer-stats">  
+                        <div class="stat-item">  
+                            <i class="fas fa-fire"></i>  
+                            <span id="focus-sessions">0 Sessions</span>  
+                        </div>  
+                        <div class="stat-item">  
+                            <i class="fas fa-clock"></i>  
+                            <span id="total-focus-time">0m Total</span>  
+                        </div>  
+                        <div class="stat-item">  
+                            <i class="fas fa-bolt"></i>  
+                            <span id="focus-streak">0 Day Streak</span>  
+                        </div>  
+                    </div>  
+                </div>  
+            </section>  <!-- QUICK NOTES VIEW -->  
+        <section id="view-notes" class="view">  
+            <header class="view-header">  
+                <h1>Quick Notes</h1>  
+            </header>  
+            <div class="note-creator">  
+                <textarea id="noteContent" placeholder="Capture your thoughts, ideas, or quick notes..." rows="4"></textarea>  
+                <div class="note-controls">  
+                    <button id="clearNote" class="btn-outline">Clear</button>  
+                    <button id="saveNote" class="btn-primary">Save Note</button>  
+                </div>  
+            </div>  
+            <div class="notes-grid" id="notesGrid">  
+                <!-- Notes will be rendered here -->  
+            </div>  
+        </section>  
 
-            <!-- SETTINGS VIEW -->
-            <section id="view-settings" class="view">
-                <header class="view-header">
-                    <h1>Configuration</h1>
-                </header>
-                <div class="settings-list">
-                    <div class="setting-item">
-                        <div class="s-info">
-                            <h4>Visual Theme</h4>
-                            <p>Switch between Dark and Light mode</p>
-                        </div>
-                        <div class="toggle-switch">
-                            <input type="checkbox" id="themeToggle">
-                            <label for="themeToggle"></label>
-                        </div>
-                    </div>
-                    <div class="setting-item">
-                        <div class="s-info">
-                            <h4>Focus Timer Sound</h4>
-                            <p>Enable/disable timer completion sound</p>
-                        </div>
-                        <div class="toggle-switch">
-                            <input type="checkbox" id="soundToggle" checked>
-                            <label for="soundToggle"></label>
-                        </div>
-                    </div>
-                    <div class="setting-item">
-                        <div class="s-info">
-                            <h4>Auto-save Notes</h4>
-                            <p>Automatically save notes every minute</p>
-                        </div>
-                        <div class="toggle-switch">
-                            <input type="checkbox" id="autosaveToggle" checked>
-                            <label for="autosaveToggle"></label>
-                        </div>
-                    </div>
-                    <div class="setting-item">
-                        <div class="s-info">
-                            <h4>Daily Reminders</h4>
-                            <p>Get daily productivity reminders</p>
-                        </div>
-                        <div class="toggle-switch">
-                            <input type="checkbox" id="reminderToggle">
-                            <label for="reminderToggle"></label>
-                        </div>
-                    </div>
-                    <div class="setting-item">
-                        <div class="s-info">
-                            <h4>Export Data</h4>
-                            <p>Download all your data as JSON</p>
-                        </div>
-                        <button class="btn-outline" onclick="exportData()">Export</button>
-                    </div>
-                    <div class="setting-item danger">
-                        <div class="s-info">
-                            <h4>Data Control</h4>
-                            <p>Permanently delete all local data</p>
-                        </div>
-                        <button class="btn-danger" onclick="showWipeModal()">Wipe All Data</button>
-                    </div>
-                </div>
-                <div class="about-section">
-                    <h3>About TaskController</h3>
-                    <p>Version 8.0 | Premium Productivity Suite</p>
-                    <p>© 2026 TaskController Technologies. All rights reserved.</p>
-                    <div class="shortcuts-btn">
-                        <button class="btn-outline" onclick="showKeyboardShortcutsModal()">
-                            <i class="fas fa-keyboard"></i> Keyboard Shortcuts
-                        </button>
-                    </div>
-                </div>
-            </section>
-        </main>
+        <!-- SETTINGS VIEW -->  
+        <section id="view-settings" class="view">  
+            <header class="view-header">  
+                <h1>Configuration</h1>  
+            </header>  
+            <div class="settings-list">  
+                <div class="setting-item">  
+                    <div class="s-info">  
+                        <h4>Visual Theme</h4>  
+                        <p>Switch between Dark and Light mode</p>  
+                    </div>  
+                    <div class="toggle-switch">  
+                        <input type="checkbox" id="themeToggle">  
+                        <label for="themeToggle"></label>  
+                    </div>  
+                </div>  
+                <div class="setting-item">  
+                    <div class="s-info">  
+                        <h4>Focus Timer Sound</h4>  
+                        <p>Enable/disable timer completion sound</p>  
+                    </div>  
+                    <div class="toggle-switch">  
+                        <input type="checkbox" id="soundToggle" checked>  
+                        <label for="soundToggle"></label>  
+                    </div>  
+                </div>  
+                <div class="setting-item">  
+                    <div class="s-info">  
+                        <h4>Auto-save Notes</h4>  
+                        <p>Automatically save notes every minute</p>  
+                    </div>  
+                    <div class="toggle-switch">  
+                        <input type="checkbox" id="autosaveToggle" checked>  
+                        <label for="autosaveToggle"></label>  
+                    </div>  
+                </div>  
+                <div class="setting-item">  
+                    <div class="s-info">  
+                        <h4>Daily Reminders</h4>  
+                        <p>Get daily productivity reminders</p>  
+                    </div>  
+                    <div class="toggle-switch">  
+                        <input type="checkbox" id="reminderToggle">  
+                        <label for="reminderToggle"></label>  
+                    </div>  
+                </div>  
+                <div class="setting-item">  
+                    <div class="s-info">  
+                        <h4>Export Data</h4>  
+                        <p>Download all your data as JSON</p>  
+                    </div>  
+                    <button class="btn-outline" onclick="exportData()">Export</button>  
+                </div>  
+                <div class="setting-item danger">  
+                    <div class="s-info">  
+                        <h4>Data Control</h4>  
+                        <p>Permanently delete all local data</p>  
+                    </div>  
+                    <button class="btn-danger" onclick="showWipeModal()">Wipe All Data</button>  
+                </div>  
+            </div>  
+            <div class="about-section">  
+                <h3>About TaskController</h3>  
+                <p>Version 8.0 | Premium Productivity Suite</p>  
+                <p>© 2026 TaskController Technologies. All rights reserved.</p>  
+                <div class="shortcuts-btn">  
+                    <button class="btn-outline" onclick="showKeyboardShortcutsModal()">  
+                        <i class="fas fa-keyboard"></i> Keyboard Shortcuts  
+                    </button>  
+                </div>  
+            </div>  
+        </section>  
+    </main>
 
-    
-<!-- MOBILE NAV UPDATE VERSION-->
-<nav class="mobile-nav">
-    <div class="m-nav-item active" data-view="tasks">
-        <i class="fas fa-home"></i>
-    </div>
+<!-- MOBILE NAV UPDATE VERSION-->  <nav class="mobile-nav">  
+    <div class="m-nav-item active" data-view="tasks">  
+        <i class="fas fa-home"></i>  
+    </div>  <div class="m-nav-item" data-view="analytics">  
+    <i class="fas fa-chart-bar"></i>  
+</div>  
 
-    <div class="m-nav-item" data-view="analytics">
-        <i class="fas fa-chart-bar"></i>
-    </div>
+<div class="m-nav-item" data-view="focus">  
+    <i class="fas fa-clock"></i>  
+</div>  
 
-    <div class="m-nav-item" data-view="focus">
-        <i class="fas fa-clock"></i>
-    </div>
+<div class="m-nav-item" data-view="notes">  
+    <i class="fas fa-sticky-note"></i>  
+</div>  
 
-    <div class="m-nav-item" data-view="notes">
-        <i class="fas fa-sticky-note"></i>
-    </div>
+<div class="m-nav-item" data-view="settings">  
+    <i class="fas fa-cog"></i>  
+</div>  
 
-    <div class="m-nav-item" data-view="settings">
-        <i class="fas fa-cog"></i>
-    </div>
+<!-- ✅ SWITCH ACCOUNT BUTTON -->  
+<div class="m-nav-item" onclick="showSwitchAccountModal()" title="Switch Account">  
+    <i class="fas fa-exchange-alt"></i>  
+</div>  
 
-    <!-- ✅ SWITCH ACCOUNT BUTTON -->
-    <div class="m-nav-item" onclick="showSwitchAccountModal()" title="Switch Account">
-        <i class="fas fa-exchange-alt"></i>
-    </div>
-
-    <!-- ✅ LOGOUT BUTTON -->
-    <div class="m-nav-item" onclick="showLogoutModal()" title="Logout">
-        <i class="fas fa-power-off"></i>
-    </div>
-</nav>
-        <!-- TOAST NOTIFICATION -->
-        <div id="toast" class="toast">
-            <i class="fas fa-check-circle toast-icon"></i>
-            <div class="toast-content">
-                <strong id="toast-title">Success!</strong>
-                <p id="toast-message">Operation completed successfully.</p>
-            </div>
-            <button class="toast-close" onclick="hideToast()">×</button>
-        </div>
-
-        <!-- LOGOUT MODAL -->
-        <div id="logout-modal" class="modal">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h2>Logout</h2>
-                    <button class="modal-close" onclick="closeLogoutModal()">×</button>
-                </div>
-                <div class="modal-body">
-                    <p>Are you sure you want to logout?</p>
-                    <div class="modal-actions">
-                        <button class="btn-outline" onclick="closeLogoutModal()">Cancel</button>
-                        <button class="btn-danger" onclick="logout()">Logout</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-
-           <!-- SWITCH ACCOUNT MODAL -->
-<div id="switch-account-modal" class="modal">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h2>Switch Account</h2>
-            <button class="modal-close" onclick="closeSwitchAccountModal()">×</button>
-        </div>
-        <div class="modal-body">
-            <p>Switch to another account? You will be logged out.</p>
-            <div class="modal-actions">
-                <button class="btn-outline" onclick="closeSwitchAccountModal()">Cancel</button>
-                <button class="btn-primary" onclick="confirmSwitchAccount()">Switch</button>
-            </div>
-        </div>
-    </div>
+<!-- ✅ LOGOUT BUTTON -->  
+<div class="m-nav-item" onclick="showLogoutModal()" title="Logout">  
+    <i class="fas fa-power-off"></i>  
 </div>
 
+</nav>  
+        <!-- TOAST NOTIFICATION -->  
+        <div id="toast" class="toast">  
+            <i class="fas fa-check-circle toast-icon"></i>  
+            <div class="toast-content">  
+                <strong id="toast-title">Success!</strong>  
+                <p id="toast-message">Operation completed successfully.</p>  
+            </div>  
+            <button class="toast-close" onclick="hideToast()">×</button>  
+        </div>  <!-- LOGOUT MODAL -->  
+    <div id="logout-modal" class="modal">  
+        <div class="modal-content">  
+            <div class="modal-header">  
+                <h2>Logout</h2>  
+                <button class="modal-close" onclick="closeLogoutModal()">×</button>  
+            </div>  
+            <div class="modal-body">  
+                <p>Are you sure you want to logout?</p>  
+                <div class="modal-actions">  
+                    <button class="btn-outline" onclick="closeLogoutModal()">Cancel</button>  
+                    <button class="btn-danger" onclick="logout()">Logout</button>  
+                </div>  
+            </div>  
+        </div>  
+    </div>  
 
 
+       <!-- SWITCH ACCOUNT MODAL -->
 
-        
-        <!-- DELETE CONFIRMATION MODAL -->
-        <div id="delete-modal" class="modal">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h2>Delete Task</h2>
-                    <button class="modal-close" onclick="closeDeleteModal()">×</button>
-                </div>
-                <div class="modal-body">
-                    <p>Are you sure you want to delete this task? This action cannot be undone.</p>
-                    <div class="modal-actions">
-                        <button class="btn-outline" onclick="closeDeleteModal()">Cancel</button>
-                        <button class="btn-danger" onclick="confirmDelete()">Delete</button>
-                    </div>
-                </div>
-            </div>
-        </div>
+<div id="switch-account-modal" class="modal">  
+    <div class="modal-content">  
+        <div class="modal-header">  
+            <h2>Switch Account</h2>  
+            <button class="modal-close" onclick="closeSwitchAccountModal()">×</button>  
+        </div>  
+        <div class="modal-body">  
+            <p>Switch to another account? You will be logged out.</p>  
+            <div class="modal-actions">  
+                <button class="btn-outline" onclick="closeSwitchAccountModal()">Cancel</button>  
+                <button class="btn-primary" onclick="confirmSwitchAccount()">Switch</button>  
+            </div>  
+        </div>  
+    </div>  
+</div>  <!-- DELETE CONFIRMATION MODAL -->  
+    <div id="delete-modal" class="modal">  
+        <div class="modal-content">  
+            <div class="modal-header">  
+                <h2>Delete Task</h2>  
+                <button class="modal-close" onclick="closeDeleteModal()">×</button>  
+            </div>  
+            <div class="modal-body">  
+                <p>Are you sure you want to delete this task? This action cannot be undone.</p>  
+                <div class="modal-actions">  
+                    <button class="btn-outline" onclick="closeDeleteModal()">Cancel</button>  
+                    <button class="btn-danger" onclick="confirmDelete()">Delete</button>  
+                </div>  
+            </div>  
+        </div>  
+    </div>  
 
-        <!-- WIPE DATA MODAL -->
-        <div id="wipe-modal" class="modal">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h2>⚠️ Danger Zone</h2>
-                    <button class="modal-close" onclick="closeWipeModal()">×</button>
-                </div>
-                <div class="modal-body">
-                    <p>This will permanently delete ALL your local data including tasks, notes, and settings. This action cannot be undone.</p>
-                    <div class="modal-actions">
-                        <button class="btn-outline" onclick="closeWipeModal()">Cancel</button>
-                        <button class="btn-danger" onclick="wipeData()">Delete Everything</button>
-                    </div>
-                </div>
-            </div>
-        </div>
+    <!-- WIPE DATA MODAL -->  
+    <div id="wipe-modal" class="modal">  
+        <div class="modal-content">  
+            <div class="modal-header">  
+                <h2>⚠️ Danger Zone</h2>  
+                <button class="modal-close" onclick="closeWipeModal()">×</button>  
+            </div>  
+            <div class="modal-body">  
+                <p>This will permanently delete ALL your local data including tasks, notes, and settings. This action cannot be undone.</p>  
+                <div class="modal-actions">  
+                    <button class="btn-outline" onclick="closeWipeModal()">Cancel</button>  
+                    <button class="btn-danger" onclick="wipeData()">Delete Everything</button>  
+                </div>  
+            </div>  
+        </div>  
+    </div>  
 
-        <!-- KEYBOARD SHORTCUTS MODAL -->
-        <div id="shortcuts-modal" class="modal">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h2>Keyboard Shortcuts</h2>
-                    <button class="modal-close" onclick="closeShortcutsModal()">×</button>
-                </div>
-                <div class="modal-body">
-                    <div class="shortcut-item">
-                        <kbd>Ctrl</kbd> + <kbd>N</kbd>
-                        <span>Create new task</span>
-                    </div>
-                    <div class="shortcut-item">
-                        <kbd>Ctrl</kbd> + <kbd>Enter</kbd>
-                        <span>Save current task/note</span>
-                    </div>
-                    <div class="shortcut-item">
-                        <kbd>Ctrl</kbd> + <kbd>F</kbd>
-                        <span>Start focus timer</span>
-                    </div>
-                    <div class="shortcut-item">
-                        <kbd>Ctrl</kbd> + <kbd>T</kbd>
-                        <span>Toggle theme</span>
-                    </div>
-                    <div class="shortcut-item">
-                        <kbd>Esc</kbd>
-                        <span>Close modal/cancel</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+    <!-- KEYBOARD SHORTCUTS MODAL -->  
+    <div id="shortcuts-modal" class="modal">  
+        <div class="modal-content">  
+            <div class="modal-header">  
+                <h2>Keyboard Shortcuts</h2>  
+                <button class="modal-close" onclick="closeShortcutsModal()">×</button>  
+            </div>  
+            <div class="modal-body">  
+                <div class="shortcut-item">  
+                    <kbd>Ctrl</kbd> + <kbd>N</kbd>  
+                    <span>Create new task</span>  
+                </div>  
+                <div class="shortcut-item">  
+                    <kbd>Ctrl</kbd> + <kbd>Enter</kbd>  
+                    <span>Save current task/note</span>  
+                </div>  
+                <div class="shortcut-item">  
+                    <kbd>Ctrl</kbd> + <kbd>F</kbd>  
+                    <span>Start focus timer</span>  
+                </div>  
+                <div class="shortcut-item">  
+                    <kbd>Ctrl</kbd> + <kbd>T</kbd>  
+                    <span>Toggle theme</span>  
+                </div>  
+                <div class="shortcut-item">  
+                    <kbd>Esc</kbd>  
+                    <span>Close modal/cancel</span>  
+                </div>  
+            </div>  
+        </div>  
+    </div>  
+</div>  
 
-    <!-- Network Status Indicator -->
-    <div id="network-status"></div>
+<!-- Network Status Indicator -->  
+<div id="network-status"></div>  
 
-    <!-- Loading Overlay -->
-    <div id="loading-overlay" style="display: none;">
-        <div class="loading-spinner">
-            <i class="fas fa-sync fa-spin"></i>
-            <p>Loading...</p>
-        </div>
-    </div>
+<!-- Loading Overlay -->  
+<div id="loading-overlay" style="display: none;">  
+    <div class="loading-spinner">  
+        <i class="fas fa-sync fa-spin"></i>  
+        <p>Loading...</p>  
+    </div>  
+</div>
 
-    <script src="script.js"></script>
-</body>
-</html>
+<!-- TIMER PRESET MODAL -->  <div id="preset-modal" class="modal bottom-sheet">  
+    <div class="modal-content">  
+        <h3>Select Focus Mode</h3>  <div class="preset-option active" onclick="selectPreset(1500,'Pomodoro (25:00)')">  
+        Pomodoro <small>25:00</small>  
+    </div>  
+
+    <div class="preset-option" onclick="selectPreset(300,'Quick Focus (5:00)')">  
+        Quick Focus <small>5:00</small>  
+    </div>  
+
+    <div class="preset-option" onclick="selectPreset(600,'Short Focus (10:00)')">  
+        Short Focus <small>10:00</small>  
+    </div>  
+
+    <div class="preset-option" onclick="selectPreset(1800,'Long Focus (30:00)')">  
+        Long Focus <small>30:00</small>  
+    </div>  
+
+    <div class="preset-option" onclick="selectPreset(2700,'Deep Work (45:00)')">  
+        Deep Work <small>45:00</small>  
+    </div>  
+</div>
+
+</div>  
+    <script src="script.js"></script>  
+</body>  
+</html>  
