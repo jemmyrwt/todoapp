@@ -1,4 +1,5 @@
-<!DOCTYPE html>  <html lang="en">  
+<!DOCTYPE html>  
+<html lang="en">  
 <head>  
     <meta charset="UTF-8">  
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">  
@@ -7,7 +8,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">  
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">  
 </head>  
-<body data-theme="dark">  <!-- AUTH SCREEN -->  
+<body data-theme="dark">  
+<!-- AUTH SCREEN -->  
 <div id="auth-screen" class="auth-overlay">  
     <div class="auth-card">  
         <div class="auth-logo"><i class="fas fa-bolt"></i></div>  
@@ -15,9 +17,9 @@
         <p id="auth-desc">Secure access to your dashboard</p>  
           
         <div id="reg-extra" class="auth-extra-field">  
-<input type="text" id="auth-name" placeholder="Your Full Name">
-
-</div>  <input type="email" id="auth-email" placeholder="Email Address" required>  
+            <input type="text" id="auth-name" placeholder="Your Full Name">  
+        </div>  
+        <input type="email" id="auth-email" placeholder="Email Address" required>  
         <input type="password" id="auth-pass" placeholder="Password" required>  
           
         <button id="auth-main-btn">Access Workspace</button>  
@@ -43,18 +45,17 @@
             <div class="nav-btn" data-view="settings"><i class="fas fa-cog"></i> Settings</div>  
         </nav>  
         <div class="account-buttons">  
-<!-- ✅ Switch Account (Modal Based) -->  
-<button class="switch-account-btn" onclick="showSwitchAccountModal()">  
-    <i class="fas fa-exchange-alt"></i> Switch Account  
-</button>  
-
-<!-- ✅ Logout -->  
-<button class="logout-btn" onclick="showLogoutModal()">  
-    <i class="fas fa-power-off"></i> Logout  
-</button>
-
-</div>  
-        </aside>  <main class="workspace">  
+            <!-- ✅ Switch Account (Modal Based) -->  
+            <button class="switch-account-btn" onclick="showSwitchAccountModal()">  
+                <i class="fas fa-exchange-alt"></i> Switch Account  
+            </button>  
+            <!-- ✅ Logout -->  
+            <button class="logout-btn" onclick="showLogoutModal()">  
+                <i class="fas fa-power-off"></i> Logout  
+            </button>  
+        </div>  
+    </aside>  
+    <main class="workspace">  
         <!-- TASKS VIEW -->  
         <section id="view-tasks" class="view active">  
             <header class="view-header">  
@@ -70,18 +71,22 @@
                     <button id="addBtn" onclick="addTask()"><i class="fas fa-plus"></i></button>  
                 </div>  
                 <div class="meta-row">  
-                    <select id="prioVal">  
-                        <option value="low">Low Priority</option>  
-                        <option value="medium" selected>Normal Priority</option>  
-                        <option value="high">Urgent 🔥</option>  
-                    </select>  
-                    <select id="catVal">  
-                        <option value="Work">Work</option>  
-                        <option value="Personal">Personal</option>  
-                        <option value="Finance">Finance</option>  
-                        <option value="Health">Health</option>  
-                        <option value="Learning">Learning</option>  
-                    </select>  
+                    <!-- Priority Trigger Button (replaces native select) -->  
+                    <button id="priority-btn" class="custom-select-trigger" onclick="openPriorityModal()">  
+                        <span id="priority-label">Normal Priority</span>  
+                        <i class="fas fa-chevron-down"></i>  
+                    </button>  
+                    <!-- Hidden priority value -->  
+                    <input type="hidden" id="prioVal" value="medium">  
+                    
+                    <!-- Category Trigger Button (replaces native select) -->  
+                    <button id="category-btn" class="custom-select-trigger" onclick="openCategoryModal()">  
+                        <span id="category-label">Work</span>  
+                        <i class="fas fa-chevron-down"></i>  
+                    </button>  
+                    <!-- Hidden category value -->  
+                    <input type="hidden" id="catVal" value="Work">  
+                    
                     <input type="date" id="dateVal">  
                 </div>  
                 <div class="progress-bar">  
@@ -154,30 +159,31 @@
                         <i class="fas fa-redo"></i> Reset  
                     </button>  
                 </div>  
-                <!-- PREMIUM TIMER PRESET TRIGGER -->
-
-<div class="timer-presets">  
-    <div class="preset-trigger" onclick="openPresetModal()">  
-        <span id="active-preset-label">Pomodoro (25:00)</span>  
-        <i class="fas fa-chevron-down"></i>  
-    </div>  
-</div>  
-                    <div class="timer-stats">  
-                        <div class="stat-item">  
-                            <i class="fas fa-fire"></i>  
-                            <span id="focus-sessions">0 Sessions</span>  
-                        </div>  
-                        <div class="stat-item">  
-                            <i class="fas fa-clock"></i>  
-                            <span id="total-focus-time">0m Total</span>  
-                        </div>  
-                        <div class="stat-item">  
-                            <i class="fas fa-bolt"></i>  
-                            <span id="focus-streak">0 Day Streak</span>  
-                        </div>  
+                <!-- PREMIUM TIMER PRESET TRIGGER -->  
+                <div class="timer-presets">  
+                    <div class="preset-trigger" onclick="openPresetModal()">  
+                        <span id="active-preset-label">Pomodoro (25:00)</span>  
+                        <i class="fas fa-chevron-down"></i>  
                     </div>  
                 </div>  
-            </section>  <!-- QUICK NOTES VIEW -->  
+                <div class="timer-stats">  
+                    <div class="stat-item">  
+                        <i class="fas fa-fire"></i>  
+                        <span id="focus-sessions">0 Sessions</span>  
+                    </div>  
+                    <div class="stat-item">  
+                        <i class="fas fa-clock"></i>  
+                        <span id="total-focus-time">0m Total</span>  
+                    </div>  
+                    <div class="stat-item">  
+                        <i class="fas fa-bolt"></i>  
+                        <span id="focus-streak">0 Day Streak</span>  
+                    </div>  
+                </div>  
+            </div>  
+        </section>  
+
+        <!-- QUICK NOTES VIEW -->  
         <section id="view-notes" class="view">  
             <header class="view-header">  
                 <h1>Quick Notes</h1>  
@@ -266,47 +272,46 @@
                 </div>  
             </div>  
         </section>  
-    </main>
+    </main>  
 
-<!-- MOBILE NAV UPDATE VERSION-->  <nav class="mobile-nav">  
-    <div class="m-nav-item active" data-view="tasks">  
-        <i class="fas fa-home"></i>  
-    </div>  <div class="m-nav-item" data-view="analytics">  
-    <i class="fas fa-chart-bar"></i>  
-</div>  
+    <!-- MOBILE NAV UPDATE VERSION-->  
+    <nav class="mobile-nav">  
+        <div class="m-nav-item active" data-view="tasks">  
+            <i class="fas fa-home"></i>  
+        </div>  
+        <div class="m-nav-item" data-view="analytics">  
+            <i class="fas fa-chart-bar"></i>  
+        </div>  
+        <div class="m-nav-item" data-view="focus">  
+            <i class="fas fa-clock"></i>  
+        </div>  
+        <div class="m-nav-item" data-view="notes">  
+            <i class="fas fa-sticky-note"></i>  
+        </div>  
+        <div class="m-nav-item" data-view="settings">  
+            <i class="fas fa-cog"></i>  
+        </div>  
+        <!-- ✅ SWITCH ACCOUNT BUTTON -->  
+        <div class="m-nav-item" onclick="showSwitchAccountModal()" title="Switch Account">  
+            <i class="fas fa-exchange-alt"></i>  
+        </div>  
+        <!-- ✅ LOGOUT BUTTON -->  
+        <div class="m-nav-item" onclick="showLogoutModal()" title="Logout">  
+            <i class="fas fa-power-off"></i>  
+        </div>  
+    </nav>  
 
-<div class="m-nav-item" data-view="focus">  
-    <i class="fas fa-clock"></i>  
-</div>  
+    <!-- TOAST NOTIFICATION -->  
+    <div id="toast" class="toast">  
+        <i class="fas fa-check-circle toast-icon"></i>  
+        <div class="toast-content">  
+            <strong id="toast-title">Success!</strong>  
+            <p id="toast-message">Operation completed successfully.</p>  
+        </div>  
+        <button class="toast-close" onclick="hideToast()">×</button>  
+    </div>  
 
-<div class="m-nav-item" data-view="notes">  
-    <i class="fas fa-sticky-note"></i>  
-</div>  
-
-<div class="m-nav-item" data-view="settings">  
-    <i class="fas fa-cog"></i>  
-</div>  
-
-<!-- ✅ SWITCH ACCOUNT BUTTON -->  
-<div class="m-nav-item" onclick="showSwitchAccountModal()" title="Switch Account">  
-    <i class="fas fa-exchange-alt"></i>  
-</div>  
-
-<!-- ✅ LOGOUT BUTTON -->  
-<div class="m-nav-item" onclick="showLogoutModal()" title="Logout">  
-    <i class="fas fa-power-off"></i>  
-</div>
-
-</nav>  
-        <!-- TOAST NOTIFICATION -->  
-        <div id="toast" class="toast">  
-            <i class="fas fa-check-circle toast-icon"></i>  
-            <div class="toast-content">  
-                <strong id="toast-title">Success!</strong>  
-                <p id="toast-message">Operation completed successfully.</p>  
-            </div>  
-            <button class="toast-close" onclick="hideToast()">×</button>  
-        </div>  <!-- LOGOUT MODAL -->  
+    <!-- LOGOUT MODAL -->  
     <div id="logout-modal" class="modal">  
         <div class="modal-content">  
             <div class="modal-header">  
@@ -323,24 +328,24 @@
         </div>  
     </div>  
 
-
-       <!-- SWITCH ACCOUNT MODAL -->
-
-<div id="switch-account-modal" class="modal">  
-    <div class="modal-content">  
-        <div class="modal-header">  
-            <h2>Switch Account</h2>  
-            <button class="modal-close" onclick="closeSwitchAccountModal()">×</button>  
-        </div>  
-        <div class="modal-body">  
-            <p>Switch to another account? You will be logged out.</p>  
-            <div class="modal-actions">  
-                <button class="btn-outline" onclick="closeSwitchAccountModal()">Cancel</button>  
-                <button class="btn-primary" onclick="confirmSwitchAccount()">Switch</button>  
+    <!-- SWITCH ACCOUNT MODAL -->  
+    <div id="switch-account-modal" class="modal">  
+        <div class="modal-content">  
+            <div class="modal-header">  
+                <h2>Switch Account</h2>  
+                <button class="modal-close" onclick="closeSwitchAccountModal()">×</button>  
+            </div>  
+            <div class="modal-body">  
+                <p>Switch to another account? You will be logged out.</p>  
+                <div class="modal-actions">  
+                    <button class="btn-outline" onclick="closeSwitchAccountModal()">Cancel</button>  
+                    <button class="btn-primary" onclick="confirmSwitchAccount()">Switch</button>  
+                </div>  
             </div>  
         </div>  
     </div>  
-</div>  <!-- DELETE CONFIRMATION MODAL -->  
+
+    <!-- DELETE CONFIRMATION MODAL -->  
     <div id="delete-modal" class="modal">  
         <div class="modal-content">  
             <div class="modal-header">  
@@ -405,6 +410,159 @@
             </div>  
         </div>  
     </div>  
+
+    <!-- TIMER PRESET BOTTOM SHEET MODAL -->  
+    <div id="preset-modal" class="modal bottom-sheet">  
+        <div class="modal-content bottom-sheet-content">  
+            <div class="bottom-sheet-header">  
+                <h3>Select Focus Mode</h3>  
+                <button class="modal-close" onclick="closePresetModal()">×</button>  
+            </div>  
+            <div class="bottom-sheet-body">  
+                <div class="bottom-sheet-option active" onclick="selectPreset(1500, 'Pomodoro (25:00)')">  
+                    <div class="option-icon">  
+                        <i class="fas fa-clock"></i>  
+                    </div>  
+                    <div class="option-content">  
+                        <strong>Pomodoro</strong>  
+                        <small>25:00</small>  
+                    </div>  
+                </div>  
+                <div class="bottom-sheet-option" onclick="selectPreset(300, 'Quick Focus (5:00)')">  
+                    <div class="option-icon">  
+                        <i class="fas fa-bolt"></i>  
+                    </div>  
+                    <div class="option-content">  
+                        <strong>Quick Focus</strong>  
+                        <small>5:00</small>  
+                    </div>  
+                </div>  
+                <div class="bottom-sheet-option" onclick="selectPreset(600, 'Short Focus (10:00)')">  
+                    <div class="option-icon">  
+                        <i class="fas fa-hourglass-half"></i>  
+                    </div>  
+                    <div class="option-content">  
+                        <strong>Short Focus</strong>  
+                        <small>10:00</small>  
+                    </div>  
+                </div>  
+                <div class="bottom-sheet-option" onclick="selectPreset(1800, 'Long Focus (30:00)')">  
+                    <div class="option-icon">  
+                        <i class="fas fa-hourglass-end"></i>  
+                    </div>  
+                    <div class="option-content">  
+                        <strong>Long Focus</strong>  
+                        <small>30:00</small>  
+                    </div>  
+                </div>  
+                <div class="bottom-sheet-option" onclick="selectPreset(2700, 'Deep Work (45:00)')">  
+                    <div class="option-icon">  
+                        <i class="fas fa-brain"></i>  
+                    </div>  
+                    <div class="option-content">  
+                        <strong>Deep Work</strong>  
+                        <small>45:00</small>  
+                    </div>  
+                </div>  
+            </div>  
+        </div>  
+    </div>  
+
+    <!-- PRIORITY BOTTOM SHEET MODAL -->  
+    <div id="priority-modal" class="modal bottom-sheet">  
+        <div class="modal-content bottom-sheet-content">  
+            <div class="bottom-sheet-header">  
+                <h3>Select Priority</h3>  
+                <button class="modal-close" onclick="closePriorityModal()">×</button>  
+            </div>  
+            <div class="bottom-sheet-body">  
+                <div class="bottom-sheet-option" onclick="selectPriority('low', 'Low Priority')">  
+                    <div class="option-icon" style="color: var(--success);">  
+                        <i class="fas fa-flag"></i>  
+                    </div>  
+                    <div class="option-content">  
+                        <strong>Low Priority</strong>  
+                        <small>Normal importance</small>  
+                    </div>  
+                </div>  
+                <div class="bottom-sheet-option active" onclick="selectPriority('medium', 'Normal Priority')">  
+                    <div class="option-icon" style="color: var(--warning);">  
+                        <i class="fas fa-flag"></i>  
+                    </div>  
+                    <div class="option-content">  
+                        <strong>Normal Priority</strong>  
+                        <small>Standard importance</small>  
+                    </div>  
+                </div>  
+                <div class="bottom-sheet-option" onclick="selectPriority('high', 'Urgent 🔥')">  
+                    <div class="option-icon" style="color: var(--danger);">  
+                        <i class="fas fa-flag"></i>  
+                    </div>  
+                    <div class="option-content">  
+                        <strong>Urgent 🔥</strong>  
+                        <small>High importance</small>  
+                    </div>  
+                </div>  
+            </div>  
+        </div>  
+    </div>  
+
+    <!-- CATEGORY BOTTOM SHEET MODAL -->  
+    <div id="category-modal" class="modal bottom-sheet">  
+        <div class="modal-content bottom-sheet-content">  
+            <div class="bottom-sheet-header">  
+                <h3>Select Category</h3>  
+                <button class="modal-close" onclick="closeCategoryModal()">×</button>  
+            </div>  
+            <div class="bottom-sheet-body">  
+                <div class="bottom-sheet-option active" onclick="selectCategory('Work', 'Work')">  
+                    <div class="option-icon" style="color: var(--p);">  
+                        <i class="fas fa-briefcase"></i>  
+                    </div>  
+                    <div class="option-content">  
+                        <strong>Work</strong>  
+                        <small>Professional tasks</small>  
+                    </div>  
+                </div>  
+                <div class="bottom-sheet-option" onclick="selectCategory('Personal', 'Personal')">  
+                    <div class="option-icon" style="color: var(--accent);">  
+                        <i class="fas fa-user"></i>  
+                    </div>  
+                    <div class="option-content">  
+                        <strong>Personal</strong>  
+                        <small>Personal tasks</small>  
+                    </div>  
+                </div>  
+                <div class="bottom-sheet-option" onclick="selectCategory('Finance', 'Finance')">  
+                    <div class="option-icon" style="color: var(--success);">  
+                        <i class="fas fa-money-bill-wave"></i>  
+                    </div>  
+                    <div class="option-content">  
+                        <strong>Finance</strong>  
+                        <small>Money & budget</small>  
+                    </div>  
+                </div>  
+                <div class="bottom-sheet-option" onclick="selectCategory('Health', 'Health')">  
+                    <div class="option-icon" style="color: var(--info);">  
+                        <i class="fas fa-heartbeat"></i>  
+                    </div>  
+                    <div class="option-content">  
+                        <strong>Health</strong>  
+                        <small>Fitness & wellness</small>  
+                    </div>  
+                </div>  
+                <div class="bottom-sheet-option" onclick="selectCategory('Learning', 'Learning')">  
+                    <div class="option-icon" style="color: var(--warning);">  
+                        <i class="fas fa-graduation-cap"></i>  
+                    </div>  
+                    <div class="option-content">  
+                        <strong>Learning</strong>  
+                        <small>Study & growth</small>  
+                    </div>  
+                </div>  
+            </div>  
+        </div>  
+    </div>  
 </div>  
 
 <!-- Network Status Indicator -->  
@@ -416,32 +574,8 @@
         <i class="fas fa-sync fa-spin"></i>  
         <p>Loading...</p>  
     </div>  
-</div>
-
-<!-- TIMER PRESET MODAL -->  <div id="preset-modal" class="modal bottom-sheet">  
-    <div class="modal-content">  
-        <h3>Select Focus Mode</h3>  <div class="preset-option active" onclick="selectPreset(1500,'Pomodoro (25:00)')">  
-        Pomodoro <small>25:00</small>  
-    </div>  
-
-    <div class="preset-option" onclick="selectPreset(300,'Quick Focus (5:00)')">  
-        Quick Focus <small>5:00</small>  
-    </div>  
-
-    <div class="preset-option" onclick="selectPreset(600,'Short Focus (10:00)')">  
-        Short Focus <small>10:00</small>  
-    </div>  
-
-    <div class="preset-option" onclick="selectPreset(1800,'Long Focus (30:00)')">  
-        Long Focus <small>30:00</small>  
-    </div>  
-
-    <div class="preset-option" onclick="selectPreset(2700,'Deep Work (45:00)')">  
-        Deep Work <small>45:00</small>  
-    </div>  
-</div>
-
 </div>  
-    <script src="script.js"></script>  
+
+<script src="script.js"></script>  
 </body>  
-</html>  
+</html>
